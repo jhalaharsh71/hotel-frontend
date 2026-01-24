@@ -1,0 +1,57 @@
+/* ===== YOUR BOOKINGS PAGE STYLES ===== */
+
+.booking-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.booking-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s ease;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.booking-card:hover::before {
+  left: 100%;
+}
+
+.booking-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ===== RESPONSIVE ADJUSTMENTS ===== */
+@media (max-width: 768px) {
+  .booking-card {
+    margin-bottom: 12px;
+  }
+}
+
+/* ===== ANIMATION FOR CARD LOAD ===== */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.booking-card {
+  animation: slideInUp 0.5s ease-out;
+}
+
+/* ===== ICON COLOR CONSISTENCY ===== */
+.booking-card .bi,
+.booking-card svg {
+  color: inherit;
+}

@@ -1,0 +1,156 @@
+/* =====================
+   PAGE BACKGROUND
+===================== */
+.guests-wrapper {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc, #eef2f7);
+  padding: 24px;
+}
+
+/* =====================
+   HEADER
+===================== */
+.guests-title {
+  font-size: 2.6rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.gradient-text {
+  background: linear-gradient(90deg, #2563eb, #4f46e5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.services-subtitle {
+  color: #64748b;
+  font-size: 1.05rem;
+  max-width: 520px;
+}
+
+/* =====================
+   STATS BADGE
+===================== */
+.stat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #eef2ff;
+  color: #3730a3;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.stat-number {
+  font-size: 1.2rem;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  margin-top: 10px;
+}
+
+/* =====================
+   CARD
+===================== */
+.guests-card {
+  border-radius: 18px;
+  border: none;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+}
+
+.guests-card .card-body {
+  padding: 28px;
+}
+
+/* =====================
+   EMPTY STATE
+===================== */
+.empty-state {
+  text-align: center;
+  padding: 70px 20px;
+  color: #64748b;
+}
+
+.empty-state h4 {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+/* =====================
+   TABLE
+===================== */
+.guests-table {
+  border-collapse: separate;
+  border-spacing: 0 10px;
+  margin-bottom: 0;
+}
+
+.guests-table thead th {
+  border: none;
+  color: #475569;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+  padding: 16px;
+  background: transparent;
+}
+
+.click-row {
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+  transition: all 0.25s ease;
+  cursor: pointer;
+}
+
+.click-row:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+}
+
+.click-row td {
+  border: none;
+  vertical-align: middle;
+  padding: 16px;
+}
+
+.guest-name {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.room-badge {
+  background: #eef2ff;
+  color: #4338ca;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
+}
+
+.amount {
+  font-weight: 700;
+  color: #2563eb;
+}
+
+/* =====================
+   VIEW BUTTON
+===================== */
+.btn-view {
+  background: #f3f4f6;
+  color: #1f2937;
+  border: none;
+  border-radius: 10px;
+  padding: 6px 14px;
+  font-weight: 500;
+  transition: all 0.25s ease;
+}
+
+.btn-view:hover {
+  background: #e5e7eb;
+  color: #1f2937;
+  transform: translateY(-2px);
+}

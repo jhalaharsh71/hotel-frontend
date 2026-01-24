@@ -1,0 +1,548 @@
+/* ============================================================
+   MODERN & PROFESSIONAL ADMIN DASHBOARD
+   ============================================================ */
+
+* {
+  box-sizing: border-box;
+}
+
+.dashboard-main {
+  background: linear-gradient(135deg, #f5f6fa 0%, #e9ecef 100%);
+  min-height: 100vh;
+  padding-bottom: 3rem;
+}
+
+.dash-container {
+  max-width: 1400px;
+  padding: 2rem 1.5rem;
+}
+
+/* ============================================================
+   DASHBOARD HEADER
+   ============================================================ */
+.dash-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 3rem;
+  padding: 0;
+}
+
+.dash-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #1a1a2e;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.8px;
+}
+
+.dash-subtitle {
+  font-size: 0.95rem;
+  color: #6c757d;
+  margin: 0;
+  font-weight: 500;
+}
+
+.refresh-icon-btn {
+  padding: 0.625rem 0.875rem;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  border: 2px solid #dee2e6;
+  color: #495057;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: white;
+  cursor: pointer;
+}
+
+.refresh-icon-btn:hover {
+  border-color: #0d6efd;
+  color: #0d6efd;
+  background-color: #f8f9ff;
+  transform: rotate(180deg);
+  transition: all 0.5s ease;
+}
+
+/* ============================================================
+   SECTION BLOCKS
+   ============================================================ */
+.section-block {
+  margin-bottom: 3rem;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-bottom: 0;
+}
+
+.section-title svg {
+  color: #0d6efd;
+  opacity: 0.85;
+}
+
+/* ============================================================
+   STAT BOX - MODERN DESIGN
+   ============================================================ */
+.stat-box {
+  background: white;
+  border-radius: 12px;
+  padding: 1.75rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  border: 1px solid #e9ecef;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-box::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, #0d6efd 0%, #0b5ed7 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.stat-box:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 16px 32px rgba(13, 110, 253, 0.12);
+  border-color: #0d6efd;
+}
+
+.stat-box:hover::before {
+  opacity: 1;
+}
+
+.stat-icon-wrapper {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #e7f1ff 0%, #f0f6ff 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0d6efd;
+  flex-shrink: 0;
+  font-weight: 700;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #6c757d;
+  margin: 0;
+  margin-bottom: 0.5rem;
+}
+
+.stat-number {
+  font-size: 1.875rem;
+  font-weight: 800;
+  color: #1a1a2e;
+  margin: 0;
+  line-height: 1.2;
+}
+
+/* ============================================================
+   REVENUE BOX - PREMIUM STYLE
+   ============================================================ */
+.revenue-box {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+  border-radius: 12px;
+  padding: 1.75rem;
+  border: 1.5px solid #e9ecef;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  position: relative;
+}
+
+.revenue-box::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle, rgba(13, 110, 253, 0.1) 0%, rgba(13, 110, 253, 0) 70%);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.revenue-box:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 16px 32px rgba(13, 110, 253, 0.15);
+  border-color: #0d6efd;
+}
+
+.revenue-box:hover::after {
+  opacity: 1;
+}
+
+.revenue-top {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.revenue-top svg {
+  color: #0d6efd;
+  opacity: 0.8;
+}
+
+.revenue-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #6c757d;
+  margin: 0;
+}
+
+.revenue-amount {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #1a1a2e;
+  margin: 0;
+  line-height: 1.2;
+}
+
+/* ============================================================
+   TABLE STYLING
+   ============================================================ */
+.table-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e9ecef;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+}
+
+.table-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.dash-table {
+  margin: 0;
+  border-collapse: collapse;
+}
+
+.dash-table thead {
+  background: linear-gradient(135deg, #f8f9ff 0%, #f3f4ff 100%);
+  border-bottom: 2px solid #e9ecef;
+}
+
+.dash-table th {
+  padding: 1.25rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: #495057;
+  border: none;
+}
+
+.dash-table tbody tr {
+  border-bottom: 1px solid #f0f0f0;
+  transition: all 0.2s ease;
+}
+
+.dash-table tbody tr:hover {
+  background-color: #f8f9ff;
+}
+
+.dash-table tbody td {
+  padding: 1.125rem 1.25rem;
+  color: #495057;
+  border: none;
+  font-size: 0.95rem;
+}
+
+.dash-table tbody strong {
+  color: #1a1a2e;
+  font-weight: 700;
+}
+
+.text-end {
+  text-align: right;
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* ============================================================
+   STATUS BADGES
+   ============================================================ */
+.badge-status {
+  display: inline-block;
+  padding: 0.45rem 0.875rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.badge-confirmed {
+  background: linear-gradient(135deg, #d1f2eb 0%, #a6f0d9 100%);
+  color: #0d7377;
+}
+
+.badge-pending {
+  background: linear-gradient(135deg, #fdf3c3 0%, #fce8a8 100%);
+  color: #8d6e63;
+}
+
+.badge-cancelled {
+  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+  color: #721c24;
+}
+
+/* ============================================================
+   LOADING STATE
+   ============================================================ */
+.dash-loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+  gap: 1rem;
+  color: #6c757d;
+}
+
+.dash-loading-container .spinner-border {
+  width: 3rem;
+  height: 3rem;
+  color: #0d6efd;
+}
+
+/* ============================================================
+   ERROR STATE
+   ============================================================ */
+.dash-error-container {
+  padding: 2.5rem;
+  background: white;
+  border-radius: 12px;
+  margin: 2rem;
+  border: 1px solid #e9ecef;
+}
+
+.dash-error-container .alert {
+  margin: 0;
+  background: rgba(220, 53, 69, 0.05);
+  border: 1px solid rgba(220, 53, 69, 0.15);
+  color: #721c24;
+}
+
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+.dash-empty-container {
+  padding: 2.5rem;
+  margin: 2rem;
+}
+
+/* ============================================================
+   RESPONSIVE DESIGN
+   ============================================================ */
+@media (max-width: 768px) {
+  .dash-container {
+    padding: 1.5rem 1rem;
+  }
+
+  .dash-header {
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .dash-title {
+    font-size: 1.75rem;
+  }
+
+  .stat-box {
+    padding: 1.5rem;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .stat-icon-wrapper {
+    width: 48px;
+    height: 48px;
+  }
+
+  .revenue-box {
+    padding: 1.5rem;
+  }
+
+  .stat-number {
+    font-size: 1.5rem;
+  }
+
+  .revenue-amount {
+    font-size: 1.75rem;
+  }
+
+  .dash-table th {
+    padding: 0.875rem;
+    font-size: 0.7rem;
+  }
+
+  .dash-table tbody td {
+    padding: 0.875rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .dash-container {
+    padding: 1rem 0.75rem;
+  }
+
+  .dash-title {
+    font-size: 1.5rem;
+  }
+
+  .dash-subtitle {
+    font-size: 0.85rem;
+  }
+
+  .refresh-icon-btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .stat-box {
+    padding: 1.25rem;
+  }
+
+  .stat-icon-wrapper {
+    width: 44px;
+    height: 44px;
+  }
+
+  .stat-number {
+    font-size: 1.35rem;
+  }
+
+  .revenue-box {
+    padding: 1.25rem;
+  }
+
+  .revenue-amount {
+    font-size: 1.5rem;
+  }
+
+  .section-title {
+    font-size: 1.1rem;
+  }
+
+  .dash-table {
+    font-size: 0.85rem;
+  }
+
+  .dash-table th {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.65rem;
+  }
+
+  .dash-table tbody td {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .badge-status {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.65rem;
+  }
+
+  .table-responsive {
+    margin: 0 -0.75rem;
+  }
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stat-box {
+  animation: fadeInUp 0.5s ease forwards;
+}
+
+.revenue-box {
+  animation: fadeInUp 0.5s ease forwards;
+}
+
+.table-card {
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+.stat-box:nth-child(2) {
+  animation-delay: 0.05s;
+}
+
+.stat-box:nth-child(3) {
+  animation-delay: 0.1s;
+}
+
+.stat-box:nth-child(4) {
+  animation-delay: 0.15s;
+}
+
+/* ============================================================
+   FW-600 UTILITY CLASS (FROM BOOTSTRAP)
+   ============================================================ */
+.fw-600 {
+  font-weight: 600;
+}
+
+.dash-title {
+  font-size: 2.6rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.gradient-text {
+  background: linear-gradient(90deg, #2563eb, #4f46e5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.dash-subtitle {
+  color: #64748b;
+  font-size: 1.05rem;
+  max-width: 520px;
+}

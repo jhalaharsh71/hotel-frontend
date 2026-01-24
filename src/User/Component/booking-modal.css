@@ -1,0 +1,298 @@
+/* ===== Booking Modal ===== */
+
+.booking-modal {
+  --bs-modal-width: 700px;
+}
+
+.modal-responsive .modal-dialog {
+  margin-top: 80px;
+  max-width: 700px;
+}
+
+.modal-responsive .modal-body {
+  max-height: calc(100vh - 250px);
+  overflow-y: auto;
+  padding-right: 15px;
+}
+
+.modal-responsive .modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-responsive .modal-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.modal-responsive .modal-body::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+.modal-responsive .modal-body::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.booking-modal .modal-content {
+  border: none;
+  border-radius: 1rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.booking-modal .modal-header {
+  border-bottom: 2px solid #f0f0f0;
+  padding: 1.5rem;
+  background: white;
+}
+
+.booking-modal .modal-title {
+  font-weight: 700;
+  color: #333;
+  font-size: 1.4rem;
+}
+
+.booking-modal .btn-close {
+  opacity: 0.6;
+  transition: all 0.3s ease;
+}
+  opacity: 1;
+}
+
+/* ===== Form Controls ===== */
+.booking-modal .form-control,
+.booking-modal .form-select {
+  border: 2px solid #e9ecef;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.booking-modal .form-control:focus,
+.booking-modal .form-select:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+  background-color: #fff;
+}
+
+.booking-modal .form-label {
+  color: #495057;
+  margin-bottom: 0.6rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* ===== Cards ===== */
+.booking-modal .card {
+  border: none;
+  border-radius: 0.75rem;
+  transition: all 0.3s ease;
+}
+
+.booking-modal .card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.booking-modal .card-body {
+  padding: 1.25rem;
+}
+
+/* ===== Header Card (Hotel Info) ===== */
+.booking-modal .card-body[style*="background: linear-gradient"] {
+  position: relative;
+  overflow: hidden;
+}
+
+.booking-modal .card-body[style*="background: linear-gradient"]::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(50px, 50px);
+  }
+}
+
+.booking-modal .card-title {
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+/* ===== Light Backgrounds ===== */
+.booking-modal .bg-light {
+  background-color: #f8f9ff !important;
+  border: 1px solid #e9ecef;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+}
+
+/* ===== Text Utilities ===== */
+.booking-modal .text-success {
+  color: #28a745 !important;
+  font-weight: 700;
+}
+
+.booking-modal .text-muted {
+  color: #6c757d !important;
+  font-size: 0.875rem;
+}
+
+.booking-modal .text-secondary {
+  color: #6c757d !important;
+}
+
+/* ===== Section Headers ===== */
+.booking-modal h6 {
+  color: #333;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.5px;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  opacity: 0.95;
+}
+
+/* ===== Alerts ===== */
+.booking-modal .alert {
+  border: none;
+  border-left: 4px solid;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.booking-modal .alert-danger {
+  background-color: #fff5f5;
+  border-color: #f5c6cb;
+  color: #721c24;
+}
+
+.booking-modal .alert-danger svg {
+  color: #d32f2f;
+}
+
+/* ===== Buttons ===== */
+.booking-modal .btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  font-weight: 700;
+  border-radius: 0.5rem;
+  padding: 0.875rem 2rem;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.booking-modal .btn-primary:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  background: linear-gradient(135deg, #7c8ff0 0%, #8559b0 100%);
+}
+
+.booking-modal .btn-primary:active:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
+}
+
+.booking-modal .btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ===== Row Styling ===== */
+.booking-modal .row {
+  align-items: stretch;
+}
+
+.booking-modal .col-6,
+.booking-modal .col-md-6 {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== HR ===== */
+.booking-modal hr {
+  border: none;
+  border-top: 2px solid #f0f0f0;
+  margin: 1.5rem 0;
+}
+
+/* ===== Success State ===== */
+.booking-modal .text-center .text-success svg {
+  animation: bounceIn 0.6s ease;
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ===== Modal Body ===== */
+.booking-modal .modal-body {
+  padding: 2rem;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 576px) {
+  .booking-modal {
+    --bs-modal-width: 95vw;
+  }
+
+  .booking-modal .modal-body {
+    padding: 1.25rem;
+  }
+
+  .booking-modal .form-label {
+    font-size: 0.85rem;
+  }
+
+  .booking-modal h6 {
+    font-size: 0.9rem;
+  }
+
+  .booking-modal .btn-primary {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+  }
+
+  .booking-modal .card {
+    margin-bottom: 1rem;
+  }
+}

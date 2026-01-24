@@ -1,0 +1,278 @@
+/* =====================
+   PAGE BACKGROUND
+===================== */
+.services-wrapper {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc, #eef2f7);
+  padding: 24px;
+}
+
+/* =====================
+   LOADING STATE
+===================== */
+.services-loading-wrapper {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.spinner-container {
+  text-align: center;
+}
+
+/* =====================
+   HEADER
+===================== */
+.services-header {
+  align-items: center;
+}
+
+.services-title {
+  font-size: 2.6rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.gradient-text {
+  background: linear-gradient(90deg, #2563eb, #4f46e5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.services-subtitle {
+  color: #64748b;
+  font-size: 1.05rem;
+  max-width: 520px;
+}
+
+/* =====================
+   PRIMARY BUTTON
+===================== */
+.btn-add-service {
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
+  border: none;
+  padding: 12px 22px;
+  font-weight: 600;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.25);
+  transition: all 0.25s ease;
+}
+
+.btn-add-service:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(37, 99, 235, 0.35);
+}
+
+/* =====================
+   CARD
+===================== */
+.services-card {
+  border-radius: 18px;
+  border: none;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+}
+
+.services-card-body {
+  padding: 28px;
+}
+
+/* =====================
+   STATS BADGE
+===================== */
+.stat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #eef2ff;
+  color: #3730a3;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.stat-number {
+  font-size: 1.2rem;
+}
+
+/* =====================
+   EMPTY STATE
+===================== */
+.empty-state {
+  text-align: center;
+  padding: 70px 20px;
+  color: #64748b;
+}
+
+.empty-icon {
+  font-size: 3.5rem;
+  margin-bottom: 16px;
+}
+
+.empty-state h3 {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+/* =====================
+   TABLE
+===================== */
+.services-table {
+  border-collapse: separate;
+  border-spacing: 0 10px;
+}
+
+.services-table thead th {
+  border: none;
+  color: #475569;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.service-row {
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+  transition: all 0.25s ease;
+}
+
+.service-row:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+}
+
+.service-row td {
+  border: none;
+  vertical-align: middle;
+  padding: 16px;
+}
+
+/* =====================
+   SERVICE NAME
+===================== */
+.service-name-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.service-icon {
+  font-size: 1.1rem;
+}
+
+.service-name {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+/* =====================
+   PRICE
+===================== */
+.price-tag {
+  background: #f1f5f9;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* =====================
+   STATUS
+===================== */
+.status-badge {
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.status-active {
+  background: #dcfce7;
+  color: #42efe6;
+}
+
+.status-inactive {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+/* =====================
+   ACTION BUTTONS
+===================== */
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-edit {
+  background: #fef3c7;
+  color: #92400e;
+  border: none;
+  border-radius: 10px;
+  padding: 6px 14px;
+}
+
+.btn-delete {
+  background: #fee2e2;
+  color: #991b1b;
+  border: none;
+  border-radius: 10px;
+  padding: 6px 14px;
+}
+
+.btn-edit:hover,
+.btn-delete:hover {
+  opacity: 0.9;
+}
+
+/* =====================
+   MODAL
+===================== */
+.modern-modal .modal-content {
+  border-radius: 18px;
+  border: none;
+  box-shadow: 0 30px 60px rgba(15, 23, 42, 0.25);
+}
+
+.modern-modal-header {
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
+  color: white;
+  border-bottom: none;
+}
+
+.modal-title-text {
+  font-weight: 700;
+}
+
+/* =====================
+   FORM
+===================== */
+.form-control-modern {
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.form-control-modern:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.25);
+}
+
+/* =====================
+   MODAL FOOTER
+===================== */
+.modern-modal-footer {
+  border-top: none;
+}
+
+.btn-submit {
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
+  border: none;
+  border-radius: 12px;
+  padding: 10px 20px;
+}
+
+.btn-cancel {
+  border-radius: 12px;
+}
