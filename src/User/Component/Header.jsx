@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Navbar, Nav, Container, Button, Dropdown } from "react-bootstrap";
 import { User as UserIcon } from 'lucide-react';
 import { useNavigate } from "react-router-dom";
-import "./Header.css";
+import "./header.css";
 
 function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
