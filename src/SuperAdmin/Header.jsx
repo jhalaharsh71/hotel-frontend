@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Bell, User, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { ADMIN_API, SUPER_ADMIN_API } from "../config/api";
 import "./Sidebar.css";
 
 function Header() {
@@ -29,8 +30,8 @@ const handleLogout = async () => {
 
   const logoutUrl =
     role === "super_admin"
-      ? "http://127.0.0.1:8000/api/superadmin/logout"
-      : "http://127.0.0.1:8000/api/admin/logout";
+      ? `${SUPER_ADMIN_API}/logout`
+      : `${ADMIN_API}/logout`;
 
   try {
     await axios.post(logoutUrl, {}, {

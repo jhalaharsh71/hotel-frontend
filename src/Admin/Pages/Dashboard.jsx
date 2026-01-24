@@ -18,6 +18,7 @@ import {
   Bookmark,
 } from 'lucide-react';
 import './Dashboard.css';
+import { ADMIN_API } from '../../config/api';
 
 const Dashboard = () => {
   const [data, setData] = useState(null);
@@ -33,7 +34,7 @@ const Dashboard = () => {
       setLoading(true);
       setError(null);
       const token = localStorage.getItem('admin_token');
-      const response = await axios.get('http://127.0.0.1:8000/api/admin/dashboard', {
+      const response = await axios.get(`${ADMIN_API}/dashboard`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setData(response.data);

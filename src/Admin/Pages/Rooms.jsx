@@ -15,8 +15,9 @@ import {
   X,
 } from "lucide-react";
 import "./Rooms.css";
+import { ADMIN_API } from "../../config/api";
 
-const API_URL = "http://127.0.0.1:8000/api/admin/rooms";
+const API_URL = `${ADMIN_API}/rooms`;
 
 const Rooms = () => {
   const [rooms, setRooms] = useState([]);

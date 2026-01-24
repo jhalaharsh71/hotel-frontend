@@ -8,8 +8,9 @@ import {
   Spinner,
 } from 'react-bootstrap';
 import { Star, Trash2, Edit } from 'lucide-react';
+import { USER_API } from '../../config/api';
 
-const API_BASE = 'http://127.0.0.1:8000/api/user';
+const API_BASE = USER_API;
 
 const ReviewForm = ({ show, onHide, booking, onReviewSubmitted, token, existingReview = null }) => {
   const [formData, setFormData] = useState({

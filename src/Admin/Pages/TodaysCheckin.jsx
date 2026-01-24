@@ -35,7 +35,7 @@ const TodaysCheckin = () => {
       const token = localStorage.getItem("admin_token");
 
       const response = await axios.get(
-        "http://127.0.0.1:8000/api/admin/bookings",
+        `${import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'}/admin/bookings`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

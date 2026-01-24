@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { USER_API } from "../config/api";
 import "./Login.css";
 
-const ADMIN_LOGIN_API = "http://127.0.0.1:8000/api/login";
-const USER_LOGIN_API = "http://127.0.0.1:8000/api/user/login";
+const ADMIN_LOGIN_API = `${import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'}/login`;
+const USER_LOGIN_API = `${USER_API}/login`;
 
 function Login() {
   const [form, setForm] = useState({ email: "", password: "" });

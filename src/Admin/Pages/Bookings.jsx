@@ -25,8 +25,9 @@
   } from "lucide-react";
   import { useNavigate } from "react-router-dom";
   import "./Bookings.css";
+  import { ADMIN_API } from "../../config/api";
 
-  const API_BASE = "http://127.0.0.1:8000/api/admin";
+  const API_BASE = ADMIN_API;
 
   /* =====================
     DATE FORMATTER

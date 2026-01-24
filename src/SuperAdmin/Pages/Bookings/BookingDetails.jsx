@@ -15,8 +15,9 @@ import {
   Building2,
   CheckCircle
 } from 'lucide-react';
+import { SUPER_ADMIN_API } from '../../../config/api';
 
-const API_URL = "http://127.0.0.1:8000/api/superadmin";
+const API_URL = SUPER_ADMIN_API;
 
 function BookingDetails() {
   const navigate = useNavigate();

@@ -22,8 +22,9 @@ import {
   AlertTriangle,
   Activity
 } from 'lucide-react';
+import { SUPER_ADMIN_API } from '../../../config/api';
 
-const API_URL = "http://127.0.0.1:8000/api/superadmin/hotel";
+const API_URL = `${SUPER_ADMIN_API}/hotel`;
 
 const initialForm = {
   name: "",
@@ -74,7 +75,7 @@ function Hotel() {
       else setDataLoading(true);
 
       const token = localStorage.getItem("superadmin_token");
-      const res = await axios.get("http://127.0.0.1:8000/api/hotel", {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'}/hotel`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setHotels(res.data.hotel || []);
@@ -104,7 +105,7 @@ function Hotel() {
 
     try {
       const token = localStorage.getItem("superadmin_token");
-      await axios.post("http://127.0.0.1:8000/api/hotel", formData, {
+      await axios.post(`${import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'}/hotel`, formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -145,7 +146,7 @@ function Hotel() {
 
     try {
       const token = localStorage.getItem("superadmin_token");
-      const res = await axios.get("http://127.0.0.1:8000/api/hotel/cities/search", {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'}/hotel/cities/search`, {
         params: { search: searchValue, limit: 15 },
         headers: { Authorization: `Bearer ${token}` },
       });

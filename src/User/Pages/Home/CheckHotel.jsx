@@ -21,8 +21,9 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import './home.css';
+import { USER_API } from '../../../config/api';
 
-const API_BASE = 'http://127.0.0.1:8000/api/user';
+const API_BASE = USER_API;
 
 const CheckHotel = () => {
   const navigate = useNavigate();

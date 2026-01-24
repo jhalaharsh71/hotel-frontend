@@ -13,8 +13,9 @@ import {
   Users as UsersIcon,
 } from "lucide-react";
 import "./Users.css";
+import { ADMIN_API } from "../../config/api";
 
-const API_BASE = "http://127.0.0.1:8000/api/admin";
+const API_BASE = ADMIN_API;
 
 const Users = () => {
   const [users, setUsers] = useState([]);

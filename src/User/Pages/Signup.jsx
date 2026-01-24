@@ -3,8 +3,9 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../Styles/Signup.css";
 import OtpVerification from "../Component/OtpVerification";
+import { USER_API } from "../../config/api";
 
-const API_BASE = "http://127.0.0.1:8000/api/user";
+const API_BASE = USER_API;
 
 function Signup() {
   const [step, setStep] = useState("signup"); // signup or otp

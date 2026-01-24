@@ -22,8 +22,9 @@ import {
   EyeOff,
   Star
 } from 'lucide-react';
+import { SUPER_ADMIN_API, USER_API } from '../../../config/api';
 
-const API_URL = "http://127.0.0.1:8000/api/superadmin/hotel";
+const API_URL = `${SUPER_ADMIN_API}/hotel`;
 
 function HotelDetails() {
   const { id } = useParams();
@@ -135,7 +136,7 @@ function HotelDetails() {
       // Fetch hotel reviews and calculate average rating
       try {
         const reviewsRes = await axios.get(
-          `http://127.0.0.1:8000/api/user/reviews?hotel_id=${id}`,
+          `${USER_API}/reviews?hotel_id=${id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const hotelReviews = reviewsRes.data || [];
@@ -164,7 +165,7 @@ function HotelDetails() {
 
     try {
       const token = localStorage.getItem("superadmin_token");
-      const res = await axios.get("http://127.0.0.1:8000/api/hotel/cities/search", {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'}/hotel/cities/search`, {
         params: { search: searchValue, limit: 15 },
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -249,7 +250,7 @@ function HotelDetails() {
     try {
       const token = localStorage.getItem("superadmin_token");
       const res = await axios.put(
-        `http://127.0.0.1:8000/api/superadmin/hotel/${id}/status`,
+        `${API_URL}/${id}/status`,
         {},
         {
           headers: {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Download, AlertCircle, Users, Home, Briefcase, CreditCard, IndianRupee } from 'lucide-react';
 import { Container, Row, Col, Card, Table, Button, Spinner, Alert } from 'react-bootstrap';
+import { ADMIN_API } from '../../config/api';
 
 const Reports = () => {
   const [reports, setReports] = useState(null);
@@ -22,7 +23,7 @@ const Reports = () => {
       setLoading(true);
       setError(null);
       const token = localStorage.getItem('admin_token');
-      let url = 'http://127.0.0.1:8000/api/admin/reports';
+      let url = `${ADMIN_API}/reports`;
       
       // Add date parameters if provided
       const params = new URLSearchParams();
@@ -74,7 +75,7 @@ const Reports = () => {
     try {
       setDownloading(true);
       const token = localStorage.getItem('admin_token');
-      let url = 'http://127.0.0.1:8000/api/admin/reports/download';
+      let url = `${ADMIN_API}/reports/download`;
       
       // Add date parameters if provided
       const params = new URLSearchParams();

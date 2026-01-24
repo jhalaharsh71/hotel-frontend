@@ -14,6 +14,7 @@ import {
 } from "react-bootstrap";
 import { AlertCircle, User, Home, Calendar, IndianRupee, Eye, CheckCircle, XCircle, Phone } from "lucide-react";
 import "./Guests.css";
+import { ADMIN_API } from "../../config/api";
 
 const Guests = () => {
   const [guests, setGuests] = useState([]);
@@ -35,7 +36,7 @@ const Guests = () => {
       const token = localStorage.getItem("admin_token");
 
       const response = await axios.get(
-        "http://127.0.0.1:8000/api/admin/guests",
+        `${ADMIN_API}/guests`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

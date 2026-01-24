@@ -34,8 +34,9 @@ import {
 import { useParams, useNavigate } from "react-router-dom";
 import Select from "react-select";
 import "./BookingDetails.css";
+import { ADMIN_API } from "../../config/api";
 
-const API = "http://127.0.0.1:8000/api/admin";
+const API = ADMIN_API;
 
 /* ================= DATE FORMAT ================= */
 const formatDate = (date) =>

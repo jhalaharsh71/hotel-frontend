@@ -15,8 +15,9 @@ import {
 import Header from '../../Component/Header';
 import Footer from '../../Component/Footer';
 import { User, Mail, Calendar, KeyRound, BookOpen, CheckCircle2, Hotel, Users } from 'lucide-react';
+import { USER_API } from '../../../config/api';
 
-const API_BASE = 'http://127.0.0.1:8000/api/user';
+const API_BASE = USER_API;
 
 const AVATAR_COLORS = [
   '#6C63FF', '#FF6584', '#43E6FC', '#FFD166', '#06D6A0', '#FFB5E8', '#B5FFFC', '#B5FFD6', '#B5B5FF', '#FFB5B5',

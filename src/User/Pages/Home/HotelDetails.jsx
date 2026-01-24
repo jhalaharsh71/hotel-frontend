@@ -28,8 +28,9 @@ import Header from '../../Component/Header';
 import Footer from '../../Component/Footer';
 import BookingModal from '../../Component/BookingModal';
 import './hotel-details.css';
+import { USER_API } from '../../../config/api';
 
-const API_BASE = 'http://127.0.0.1:8000/api/user';
+const API_BASE = USER_API;
 
 const HotelDetails = () => {
   const { hotelId } = useParams();

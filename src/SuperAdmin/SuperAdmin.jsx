@@ -21,8 +21,9 @@ import {
 } from 'lucide-react';
 import { Card, Row, Col, Button, Alert, Spinner, Table } from 'react-bootstrap';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { SUPER_ADMIN_API } from '../config/api';
 
-const API_URL = "http://127.0.0.1:8000/api/superadmin/dashboard";
+const API_URL = `${SUPER_ADMIN_API}/dashboard`;
 
 export default function SuperAdmin() {
   const [stats, setStats] = useState({

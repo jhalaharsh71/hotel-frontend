@@ -12,8 +12,9 @@ import {
   AlertTriangle,
   ArrowLeft
 } from 'lucide-react';
+import { SUPER_ADMIN_API } from '../../../config/api';
 
-const API_URL = "http://127.0.0.1:8000/api/superadmin";
+const API_URL = SUPER_ADMIN_API;
 
 function Bookings() {
   const navigate = useNavigate();

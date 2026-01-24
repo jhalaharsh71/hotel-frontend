@@ -24,8 +24,9 @@ import {
 } from 'lucide-react';
 import PaymentModal from './PaymentModal';
 import './booking-modal.css';
+import { USER_API } from '../../config/api';
 
-const API_BASE = 'http://127.0.0.1:8000/api/user';
+const API_BASE = USER_API;
 
 const BookingModal = ({
   show,
