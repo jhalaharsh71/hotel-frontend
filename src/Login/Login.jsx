@@ -6,7 +6,7 @@ import "./Login.css";
 
 // ✅ Correct API URLs
 const ADMIN_LOGIN_API =
-  `${import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"}/api/login`;
+`${import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api"}/login`;
 
 const USER_LOGIN_API = `${USER_API}/login`;
 
