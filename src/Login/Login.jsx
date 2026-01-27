@@ -4,13 +4,21 @@ import { useNavigate } from "react-router-dom";
 import { USER_API } from "../config/api";
 import "./Login.css";
 
-const ADMIN_LOGIN_API = `${import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'}/login`;
+// ✅ Correct API URLs
+const ADMIN_LOGIN_API =
+  `${import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"}/api/login`;
+
 const USER_LOGIN_API = `${USER_API}/login`;
 
 function Login() {
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+  });
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
   const submit = async (e) => {
@@ -19,15 +27,16 @@ function Login() {
     setLoading(true);
 
     try {
-      // First try user login
+      // ============================
+      // 1️⃣ TRY USER LOGIN FIRST
+      // ============================
       let userLoginFailed = false;
+
       try {
         const res = await axios.post(USER_LOGIN_API, {
           email: form.email,
           password: form.password,
         });
-
-        // localStorage.clear();
 
         if (res.data.role === "user") {
           localStorage.setItem("user_token", res.data.token);
@@ -35,13 +44,13 @@ function Login() {
           navigate("/");
           return;
         }
-      } catch (userError) {
-        // User login failed - mark for fallback to admin
-        // Accept 401 (invalid credentials), 403 (unauthorized/wrong role)
+      } catch (err) {
         userLoginFailed = true;
       }
 
-      // If user login failed, try admin/super_admin login
+      // ============================
+      // 2️⃣ FALLBACK TO ADMIN LOGIN
+      // ============================
       if (userLoginFailed) {
         const res = await axios.post(ADMIN_LOGIN_API, {
           email: form.email,
@@ -65,7 +74,7 @@ function Login() {
         }
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Login failed");
+      setError(err.response?.data?.message || "Invalid login credentials");
     } finally {
       setLoading(false);
     }
@@ -74,16 +83,19 @@ function Login() {
   return (
     <div className="login-wrapper">
       <div className="login-card">
-        <h2 className="login-title mb-4">Hotel Management</h2>
+        <h2 className="login-title">Hotel Management System</h2>
+        <p className="login-subtitle">
+          Sign in using your registered email
+        </p>
 
         {error && <div className="login-error">{error}</div>}
 
         <form onSubmit={submit}>
           <div className="form-group">
-            <label>Email:</label>
+            <label>Email Address</label>
             <input
               type="email"
-              placeholder="Enter your email"
+              placeholder="example@email.com"
               value={form.email}
               onChange={(e) =>
                 setForm({ ...form, email: e.target.value })
@@ -93,7 +105,7 @@ function Login() {
           </div>
 
           <div className="form-group">
-            <label>Password:</label>
+            <label>Password</label>
             <input
               type="password"
               placeholder="Enter your password"
@@ -106,12 +118,12 @@ function Login() {
           </div>
 
           <button className="login-btn" disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
+            {loading ? "Signing in..." : "Login"}
           </button>
         </form>
 
         <p className="login-footer">
-          © {new Date().getFullYear()} Multi Hotel System
+          © {new Date().getFullYear()} Multi-Hotel Management System
         </p>
       </div>
     </div>
