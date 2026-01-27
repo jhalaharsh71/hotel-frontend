@@ -44,7 +44,7 @@ function Login() {
       // If user login failed, try admin/super_admin login
       if (userLoginFailed) {
         const res = await axios.post(ADMIN_LOGIN_API, {
-          username: form.email,
+          email: form.email,
           password: form.password,
         });
 
