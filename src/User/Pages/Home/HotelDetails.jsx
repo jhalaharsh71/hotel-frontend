@@ -147,7 +147,7 @@ const HotelDetails = () => {
     
     if (!token) {
       // Redirect to login if not authenticated
-      navigate('/login', {
+      navigate('/user/login', {
         state: {
           from: location.pathname,
           searchParams,

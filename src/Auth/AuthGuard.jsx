@@ -3,7 +3,7 @@ import { isAuthenticated, isAdmin } from "./Auth";
 
 export default function AdminGuard() {
   if (!isAuthenticated() || !isAdmin()) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/admin/login" replace />;
   }
 
   return <Outlet />;

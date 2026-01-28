@@ -5,7 +5,7 @@ const SuperAdminGuard = () => {
   const role = localStorage.getItem("role");
 
   if (!token || role !== "super_admin") {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/superadmin/login" replace />;
   }
 
   return <Outlet />;

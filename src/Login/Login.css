@@ -105,3 +105,52 @@
   font-size: 13px;
   color: #94a3b8;
 }
+/* Forgot Password Link */
+.forgot-password-link {
+  color: #2563eb;
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.2s ease;
+}
+
+.forgot-password-link:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+/* Signup CTA */
+.login-signup-text {
+  margin: 0;
+  font-size: 14px;
+  color: #475569;
+}
+
+.signup-link {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.signup-link:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+/* Role Navigation */
+.role-nav-text {
+  margin: 0;
+  color: #999;
+}
+
+.role-nav-link {
+  color: #2563eb;
+  text-decoration: none;
+  font-size: 12px;
+  transition: color 0.2s ease;
+}
+
+.role-nav-link:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}

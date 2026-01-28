@@ -151,7 +151,7 @@ export default function UserBookingDetails() {
 
   useEffect(() => {
     if (!token) {
-      navigate('/login');
+      navigate('/user/login');
       return;
     }
     fetchBooking();

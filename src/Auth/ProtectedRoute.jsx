@@ -4,7 +4,7 @@ import { isAuthenticated } from "./Auth";
 
 export default function ProtectedRoute() {
   if (!isAuthenticated()) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/admin/login" replace />;
   }
 
   return <Outlet />;

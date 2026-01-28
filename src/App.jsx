@@ -10,6 +10,7 @@ import BookDetails from "./SuperAdmin/Pages/Bookings/BookingDetails";
 
 import AdminGuard from "./Auth/AdminGuard";
 import SuperAdminGuard from "./Auth/SuperAdminGuard";
+import UserGuard from "./Auth/UserGuard";
 
 import Login from "./Login/Login";
 import Signup from "./User/Pages/Signup";
@@ -53,8 +54,20 @@ function App() {
         <Route path="/profile" element={<Profile />} />
       </Route>
 
-      <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
+      {/* Login Routes - All roles */}
+      {/* <Route path="/login" element={<Login />} /> */}
+      <Route path="/user/login" element={<Login />} />
+      <Route path="/admin/login" element={<Login />} />
+      <Route path="/superadmin/login" element={<Login />} />
+      
+      <Route path="/user/signup" element={<Signup />} />
+
+      {/* USER */}
+      <Route element={<UserGuard />}>
+        <Route element={<UserLayout />}>
+          <Route path="/user" element={<Home />} />
+        </Route>
+      </Route>
 
       {/* ADMIN */}
       <Route element={<AdminGuard />}>

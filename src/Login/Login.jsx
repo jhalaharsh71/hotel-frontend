@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { USER_API } from "../config/api";
 import "./Login.css";
 
@@ -20,7 +20,12 @@ function Login() {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+  const location = useLocation();
 
+  // Detect current login route
+  const isUserLogin = location.pathname === "/user/login";
+  const isAdminLogin = location.pathname === "/admin/login";
+  const isSuperadminLogin = location.pathname === "/superadmin/login";
   const submit = async (e) => {
     e.preventDefault();
     setError("");
@@ -121,6 +126,116 @@ function Login() {
             {loading ? "Signing in..." : "Login"}
           </button>
         </form>
+
+        {/* Forgot Password Link */}
+        <div className="text-center mt-3">
+          <a href="#" className="forgot-password-link">
+            Forgot your password?
+          </a>
+        </div>
+
+        {/* Signup CTA - Only shown on user login page */}
+        {isUserLogin && (
+          <div className="text-center mt-3">
+            <p className="login-signup-text">
+              Don't have an account?{" "}
+              <a 
+                href="/user/signup" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate("/user/signup");
+                }}
+                className="signup-link"
+              >
+                Sign up
+              </a>
+            </p>
+          </div>
+        )}
+
+        {/* Role Navigation - Shown on all login pages */}
+        <div className="text-center mt-4">
+          <p className="role-nav-text" style={{ fontSize: "12px", color: "#999" }}>
+            {isUserLogin && (
+              <>
+                Admin or Superadmin?{" "}
+                <a 
+                  href="/admin/login" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate("/admin/login");
+                  }}
+                  className="role-nav-link"
+                >
+                  Admin Login
+                </a>
+                {" | "}
+                <a 
+                  href="/superadmin/login" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate("/superadmin/login");
+                  }}
+                  className="role-nav-link"
+                >
+                  Superadmin Login
+                </a>
+              </>
+            )}
+            {isAdminLogin && (
+              <>
+                User or Superadmin?{" "}
+                <a 
+                  href="/user/login" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate("/user/login");
+                  }}
+                  className="role-nav-link"
+                >
+                  User Login
+                </a>
+                {" | "}
+                <a 
+                  href="/superadmin/login" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate("/superadmin/login");
+                  }}
+                  className="role-nav-link"
+                >
+                  Superadmin Login
+                </a>
+              </>
+            )}
+            {isSuperadminLogin && (
+              <>
+                User or Admin?{" "}
+                <a 
+                  href="/user/login" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate("/user/login");
+                  }}
+                  className="role-nav-link"
+                >
+                  User Login
+                </a>
+                {" | "}
+                <a 
+                  href="/admin/login" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate("/admin/login");
+                  }}
+                  className="role-nav-link"
+                >
+                  Admin Login
+                </a>
+              </>
+            )}
+          </p>
+        </div>
 
         <p className="login-footer">
           © {new Date().getFullYear()} Multi-Hotel Management System

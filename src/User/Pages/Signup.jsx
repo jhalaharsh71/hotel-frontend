@@ -92,7 +92,7 @@ function Signup() {
   const handleOtpSuccess = () => {
     setSuccessMessage("Registration successful! Redirecting to login...");
     setTimeout(() => {
-      navigate("/login");
+      navigate("/user/login");
     }, 2000);
   };
 
@@ -210,7 +210,7 @@ function Signup() {
 
         <p className="signup-footer">
           Already have an account?{" "}
-          <a href="/login" className="login-link">
+          <a href="/user/login" className="login-link">
             Login here
           </a>
         </p>

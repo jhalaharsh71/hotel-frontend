@@ -77,8 +77,8 @@ function Header() {
             {/* Show Sign Up and Login buttons only if user is NOT logged in */}
             {!isLoggedIn && (
               <div className="user-header-auth-buttons">
-                <Button href="/signup" className="user-header-btn-signup">Sign Up</Button>
-                <Button href="/login" className="user-header-btn-login">Login</Button>
+                <Button href="/user/signup" className="user-header-btn-signup">Sign Up</Button>
+                <Button href="/user/login" className="user-header-btn-login">Login</Button>
               </div>
             )}
 

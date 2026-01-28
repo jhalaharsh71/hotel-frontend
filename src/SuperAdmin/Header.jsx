@@ -45,7 +45,10 @@ const handleLogout = async () => {
   }
 
   localStorage.clear();
-  navigate("/login");
+  
+  // Redirect to role-specific login page
+  const loginUrl = role === "super_admin" ? "/superadmin/login" : "/admin/login";
+  navigate(loginUrl);
 };
 
 
