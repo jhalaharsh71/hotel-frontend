@@ -27,13 +27,13 @@ function Header() {
   };
 
   return (
-    <Navbar className="user-header-navbar" expand="lg" sticky="top" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
+    <Navbar className="user-header-navbar" expand="lg"  style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.1)", position: "fixed", backgroundColor: '#1e3a8a', width: '100%' }}>
       <Container>
         <Navbar.Brand href="/" className="user-header-brand-logo">
           🏨 Hotel Management
         </Navbar.Brand>
 
-        <Navbar.Toggle aria-controls="basic-navbar-nav" className="user-header-toggle" />
+        <Navbar.Toggle aria-controls="basic-navbar-nav" className="user-header-toggle bg-white" />
 
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="ms-auto user-header-nav-links">
@@ -54,7 +54,7 @@ function Header() {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '8px',
-                    color: '#334155',
+                    color: '#ffffff',
                     fontWeight: 600,
                     textDecoration: 'none',
                     boxShadow: 'none',
