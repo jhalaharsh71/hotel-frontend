@@ -471,6 +471,7 @@ const UserBooking = () => {
           minHeight: '100%',
           position: 'relative',
           overflow: 'hidden',
+          marginTop:'72px'
         }}
       >
         {/* Animated background gradient orbs */}
@@ -571,6 +572,7 @@ const UserBooking = () => {
               boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15)',
               position: 'relative',
               zIndex: 10000,
+              marginTop: '40px',
             }}
           >
             <Form onSubmit={handleCheckAvailability} style={{ display: 'flex', gap: '15px', alignItems: 'flex-end', flexWrap: 'wrap' }}>

@@ -129,7 +129,7 @@ const YourBookings = () => {
     return (
       <>
         <Header />
-        <Container className="py-5 text-center">
+        <Container className="py-5 text-center" style={{marginTop:'72px'}}>
           <Spinner animation="border" variant="primary" size="lg" />
           <p className="mt-3">Loading your bookings...</p>
         </Container>
@@ -149,6 +149,7 @@ const YourBookings = () => {
           position: 'relative',
           overflow: 'hidden',
           paddingBottom: '60px',
+          marginTop:'72px'
         }}
       >
         {/* Animated background gradient orbs */}

@@ -223,8 +223,123 @@
   box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15) !important;
 }
 
-/* ===== Responsive Design ===== */
+/* ===== Single Line Search Form ===== */
+.search-form-row {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.8rem;
+  align-items: flex-start;
+}
+
+.search-col {
+  flex: 1;
+  min-width: 0;
+  padding: 0 !important;
+}
+
+.search-label {
+  font-size: 0.75rem !important;
+  margin-bottom: 0.25rem !important;
+  white-space: nowrap;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.35rem 0.5rem !important;
+  font-size: 0.8rem !important;
+  height: 32px !important;
+  border: 1px solid #ddd !important;
+  border-radius: 4px !important;
+}
+
+.search-input:focus {
+  border-color: #007bff !important;
+  box-shadow: 0 0 0 0.15rem rgba(0, 123, 255, 0.15) !important;
+}
+
+/* Desktop Card Styling - Large */
+@media (min-width: 769px) {
+  .check-hotel-overlay .card {
+    max-height: none !important;
+  }
+
+  .check-hotel-overlay .card-body {
+    padding: 2rem !important;
+  }
+
+  .check-hotel-overlay h2 {
+    font-size: 1.75rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  .check-hotel-overlay h2 ~ p {
+    font-size: 0.95rem !important;
+  }
+
+  .search-label {
+    font-size: 0.9rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .search-input {
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.95rem !important;
+    height: 40px !important;
+  }
+
+  .search-btn {
+    padding: 0.5rem 1rem !important;
+    font-size: 0.95rem !important;
+    height: 40px !important;
+  }
+
+  .search-alert {
+    padding: 0.5rem 1rem !important;
+    font-size: 0.9rem !important;
+  }
+}
+
+/* ===== Mobile & Tablet Responsive Design ===== */
 @media (max-width: 768px) {
+  .check-hotel-overlay .card {
+    max-height: 200px !important;
+  }
+
+  .check-hotel-overlay .card-body {
+    padding: 1rem !important;
+  }
+
+  .check-hotel-overlay h2 {
+    font-size: 1.3rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .check-hotel-overlay h2 ~ p {
+    font-size: 0.75rem !important;
+  }
+
+  .search-label {
+    font-size: 0.75rem !important;
+    margin-bottom: 0.25rem !important;
+  }
+
+  .search-input {
+    padding: 0.35rem 0.5rem !important;
+    font-size: 0.8rem !important;
+    height: 32px !important;
+  }
+
+  .search-btn {
+    padding: 0.35rem 0.75rem !important;
+    font-size: 0.8rem !important;
+    height: 32px !important;
+  }
+
+  .search-alert {
+    padding: 0.35rem 0.75rem !important;
+    font-size: 0.75rem !important;
+  }
+
   .check-hotel-page .card-body {
     padding: 1.5rem;
   }

@@ -16,6 +16,7 @@ function Home() {
           minHeight: "100%",
           position: "relative",
           overflow: "hidden",
+          marginTop: '72px',
           
         }}
       >

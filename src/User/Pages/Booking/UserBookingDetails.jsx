@@ -277,7 +277,7 @@ export default function UserBookingDetails() {
     <>
       <Header />
 
-      <div style={{ backgroundColor: '#ffffff', minHeight: '100vh', paddingTop: '40px', paddingBottom: '60px' }}>
+      <div style={{ backgroundColor: '#ffffff', minHeight: '100vh', paddingTop: '40px', paddingBottom: '60px', marginTop:'72px' }}>
         {/* ALERTS */}
         {error && (
           <div style={{ padding: '0 20px', marginBottom: '20px' }}>

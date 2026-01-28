@@ -188,11 +188,11 @@ const CheckHotel = () => {
                 </div>
 
                 <Form onSubmit={handleSearch}>
-                  <Row>
+                  <Row className="search-form-row">
                     {/* City Selection - Now with dynamic search */}
-                    <Col md={6} lg={3} className="mb-2 mb-md-3">
+                    <Col className="search-col">
                       <Form.Group>
-                        <Form.Label className="fw-bold d-flex align-items-center gap-2 small">
+                        <Form.Label className="fw-bold d-flex align-items-center gap-2 search-label">
                           <MapPin size={16} className="text-primary" />
                           City
                         </Form.Label>
@@ -203,7 +203,7 @@ const CheckHotel = () => {
                             value={cityInput}
                             onChange={handleCityInputChange}
                             onFocus={() => setShowCityDropdown(true)}
-                            className="form-control-sm"
+                            className="search-input"
                             autoComplete="off"
                           />
                           
@@ -241,9 +241,9 @@ const CheckHotel = () => {
                     </Col>
 
                     {/* Check-in Date */}
-                    <Col md={6} lg={3} className="mb-2 mb-md-3">
+                    <Col className="search-col">
                       <Form.Group>
-                        <Form.Label className="fw-bold d-flex align-items-center gap-2 small">
+                        <Form.Label className="fw-bold d-flex align-items-center gap-2 search-label">
                           <Calendar size={16} className="text-primary" />
                           Check-in
                         </Form.Label>
@@ -253,16 +253,16 @@ const CheckHotel = () => {
                           value={searchForm.check_in_date}
                           onChange={handleInputChange}
                           min={today}
-                          className="form-control-sm"
+                          className="search-input"
                           required
                         />
                       </Form.Group>
                     </Col>
 
                     {/* Check-out Date */}
-                    <Col md={6} lg={3} className="mb-2 mb-md-3">
+                    <Col className="search-col">
                       <Form.Group>
-                        <Form.Label className="fw-bold d-flex align-items-center gap-2 small">
+                        <Form.Label className="fw-bold d-flex align-items-center gap-2 search-label">
                           <Calendar size={16} className="text-primary" />
                           Check-out
                         </Form.Label>
@@ -272,16 +272,16 @@ const CheckHotel = () => {
                           value={searchForm.check_out_date}
                           onChange={handleInputChange}
                           min={searchForm.check_in_date || today}
-                          className="form-control-sm"
+                          className="search-input"
                           required
                         />
                       </Form.Group>
                     </Col>
 
                     {/* Number of People */}
-                    <Col md={6} lg={3} className="mb-2 mb-md-3">
+                    <Col className="search-col">
                       <Form.Group>
-                        <Form.Label className="fw-bold d-flex align-items-center gap-2 small">
+                        <Form.Label className="fw-bold d-flex align-items-center gap-2 search-label">
                           <Users size={16} className="text-primary" />
                           People
                         </Form.Label>
@@ -290,7 +290,7 @@ const CheckHotel = () => {
                           name="no_of_people"
                           value={searchForm.no_of_people}
                           onChange={handleInputChange}
-                          className="form-control-sm"
+                          className="search-input"
                           required
                         >
                           <option value={1}>1 </option>
@@ -306,22 +306,22 @@ const CheckHotel = () => {
 
                   {/* Error Message */}
                   {error && (
-                    <Row className="mb-2">
+                    <Row className="mb-1 mt-2">
                       <Col>
-                        <Alert variant="danger" className="mb-0 py-2 d-flex gap-2 small">
-                          <AlertCircle size={18} className="flex-shrink-0 mt-1" />
-                          <div>{error}</div>
+                        <Alert variant="danger" className="mb-0 py-1 d-flex gap-2 search-alert">
+                          <AlertCircle size={14} className="flex-shrink-0 mt-1" />
+                          <div style={{ fontSize: '0.75rem' }}>{error}</div>
                         </Alert>
                       </Col>
                     </Row>
                   )}
 
                   {/* Search Button */}
-                  <Row>
+                  <Row className="mt-1">
                     <Col className="d-grid">
                       <Button
                         variant="primary"
-                        className="btn-search fw-bold"
+                        className="btn-search fw-bold search-btn"
                         type="submit"
                         disabled={loading}
                       >
@@ -332,8 +332,8 @@ const CheckHotel = () => {
                           </>
                         ) : (
                           <>
-                            <Search size={18} className="me-2" />
-                            Search Hotels
+                            <Search size={16} className="me-1" />
+                            Search
                           </>
                         )}
                       </Button>
