@@ -14,34 +14,18 @@ function Banner() {
         
         <Carousel.Item>
           <img className="banner-img" src={slide1} alt="Banner 1" />
-          <Carousel.Caption>
-            <h3>Luxury & Comfort</h3>
-            <p>Experience premium hospitality</p>
-          </Carousel.Caption>
         </Carousel.Item>
 
         <Carousel.Item>
           <img className="banner-img" src={slide2} alt="Banner 2" />
-          <Carousel.Caption>
-            <h3>Luxury & Comfort</h3>
-            <p>Experience premium hospitality</p>
-          </Carousel.Caption>
         </Carousel.Item>
 
         <Carousel.Item>
           <img className="banner-img" src={slide3} alt="Banner 3" />
-          <Carousel.Caption>
-            <h3>Luxury & Comfort</h3>
-            <p>Experience premium hospitality</p>
-          </Carousel.Caption>
         </Carousel.Item>
 
         <Carousel.Item>
           <img className="banner-img" src={slide4} alt="Banner 4" />
-          <Carousel.Caption>
-            <h3>Luxury & Comfort</h3>
-            <p>Experience premium hospitality</p>
-          </Carousel.Caption>
         </Carousel.Item>
 
       </Carousel>

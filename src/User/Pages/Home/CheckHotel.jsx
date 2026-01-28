@@ -42,6 +42,7 @@ const CheckHotel = () => {
   const [loadingCities, setLoadingCities] = useState(false);
   const [showCityDropdown, setShowCityDropdown] = useState(false);
   const debounceTimer = useRef(null);
+  const cityDropdownRef = useRef(null);
 
   const [hotels, setHotels] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -52,6 +53,20 @@ const CheckHotel = () => {
   // ===== LOAD INITIAL CITIES ON MOUNT =====
   useEffect(() => {
     fetchCities('');
+  }, []);
+
+  // ===== CLOSE DROPDOWN WHEN CLICKING OUTSIDE =====
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (cityDropdownRef.current && !cityDropdownRef.current.contains(event.target)) {
+        setShowCityDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   // ===== DEBOUNCED CITY SEARCH =====
@@ -191,7 +206,7 @@ const CheckHotel = () => {
                   <Row className="search-form-row">
                     {/* City Selection - Now with dynamic search */}
                     <Col className="search-col">
-                      <Form.Group>
+                      <Form.Group ref={cityDropdownRef}>
                         <Form.Label className="fw-bold d-flex align-items-center gap-2 search-label">
                           <MapPin size={16} className="text-primary" />
                           City
@@ -321,7 +336,7 @@ const CheckHotel = () => {
                     <Col className="d-grid">
                       <Button
                         variant="primary"
-                        className="btn-search fw-bold search-btn"
+                        className="btn-search fw-bold search-btn mt-2"
                         type="submit"
                         disabled={loading}
                       >

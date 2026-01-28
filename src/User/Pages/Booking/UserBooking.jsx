@@ -63,6 +63,7 @@ const UserBooking = () => {
   const [loadingCities, setLoadingCities] = useState(false);
   const [showCityDropdown, setShowCityDropdown] = useState(false);
   const debounceTimer = useRef(null);
+  const cityDropdownRef = useRef(null);
 
   const [availableHotels, setAvailableHotels] = useState([]);
   const [availableRooms, setAvailableRooms] = useState([]);
@@ -121,6 +122,20 @@ const UserBooking = () => {
   // ===== LOAD INITIAL CITIES ON MOUNT =====
   useEffect(() => {
     fetchCities('');
+  }, []);
+
+  // ===== CLOSE DROPDOWN WHEN CLICKING OUTSIDE =====
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (cityDropdownRef.current && !cityDropdownRef.current.contains(event.target)) {
+        setShowCityDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   // ===== AUTO-CHECK AVAILABILITY WHEN FORM IS POPULATED =====
@@ -578,7 +593,7 @@ const UserBooking = () => {
             <Form onSubmit={handleCheckAvailability} style={{ display: 'flex', gap: '15px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
               {/* City Selection */}
               <div style={{ flex: '1', minWidth: '200px' }}>
-                <Form.Group style={{ marginBottom: '0' }}>
+                <Form.Group style={{ marginBottom: '0' }} ref={cityDropdownRef}>
                   <Form.Label style={{ color: '#e2e8f0', fontSize: '0.9rem', fontWeight: '600', marginBottom: '6px' }}>
                     City
                   </Form.Label>
