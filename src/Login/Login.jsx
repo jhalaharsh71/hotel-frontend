@@ -46,7 +46,20 @@ function Login() {
         if (res.data.role === "user") {
           localStorage.setItem("user_token", res.data.token);
           localStorage.setItem("role", "user");
-          navigate("/");
+
+          // If the user was redirected to login from a protected page,
+          // `location.state` will contain `{ from, searchParams }` (see HotelDetails).
+          // Redirect back to that `from` path and pass the original `searchParams`
+          // so the destination page can restore the user's pre-login input.
+          const redirectFrom = location.state?.from;
+          const redirectSearchParams = location.state?.searchParams;
+
+          if (redirectFrom) {
+            navigate(redirectFrom, { state: redirectSearchParams });
+          } else {
+            navigate("/");
+          }
+
           return;
         }
       } catch (err) {

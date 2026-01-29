@@ -62,6 +62,7 @@ export default function BookingDetails() {
   const [services, setServices] = useState([]);
   const [rooms, setRooms] = useState([]);
   const [hotelServices, setHotelServices] = useState([]);
+  const [roomChanges, setRoomChanges] = useState([]);
 
   /* MODALS */
   const [editGuest, setEditGuest] = useState(false);
@@ -102,6 +103,7 @@ export default function BookingDetails() {
   const [changeRoomForm, setChangeRoomForm] = useState({
     new_room_id: null,
     change_after_days: null,
+    change_date: "",
   });
 
   /* LOADING & ERROR STATES */
@@ -140,6 +142,18 @@ export default function BookingDetails() {
     setHotelServices(res.data || []);
   };
 
+  const fetchRoomChanges = async () => {
+    try {
+      const res = await axios.get(`${API}/bookings/${id}/room-changes`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setRoomChanges(res.data || []);
+    } catch (err) {
+      console.error("Error fetching room changes:", err);
+      setRoomChanges([]);
+    }
+  };
+
 const fetchAvailableRooms = async () => {
   try {
     // Helper to convert date to Y-m-d format
@@ -170,6 +184,7 @@ const fetchAvailableRooms = async () => {
     fetchBooking();
     fetchServices();
     fetchHotelServices();
+    fetchRoomChanges();
   }, []);
 
   if (!booking) return null;
@@ -322,21 +337,36 @@ const fetchAvailableRooms = async () => {
     setLoading(true);
 
     try {
-      // Validate check-out date is not before check-in
-      const checkInDate = new Date(booking.check_in_date);
+      // Validate dates
+      const newCheckInDate = new Date(stayForm.check_in_date);
       const newCheckoutDate = new Date(stayForm.check_out_date);
       
-      if (newCheckoutDate < checkInDate) {
+      if (newCheckoutDate < newCheckInDate) {
         setError("Check-out date cannot be before check-in date");
         setLoading(false);
         return;
       }
 
-      // Calculate days difference (extension positive, reduction negative)
+      // Validate check-in and checkout dates are not the same
+      if (stayForm.check_in_date === stayForm.check_out_date) {
+        setError("Check-in and check-out dates cannot be the same");
+        setLoading(false);
+        return;
+      }
+
+      // Check if check-in date was changed - only allowed when status is "active"
+      const checkInChanged = stayForm.check_in_date !== booking.check_in_date;
+      if (checkInChanged && booking.status !== "active") {
+        setError("Check-in date can only be modified when stay status is active");
+        setLoading(false);
+        return;
+      }
+
+      // Calculate days difference for checkout (extension positive, reduction negative)
       const oldCheckout = new Date(booking.check_out_date);
       const interval = Math.ceil((newCheckoutDate - oldCheckout) / (1000 * 60 * 60 * 24));
 
-      // Calculate amount change
+      // Calculate amount change based on checkout date change
       let amountChange = 0;
       let changeType = "unchanged";
       if (interval > 0) {
@@ -356,6 +386,7 @@ const fetchAvailableRooms = async () => {
         email: booking.email,
         paid_amount: booking.paid_amount,
         mode_of_payment: booking.mode_of_payment,
+        check_in_date: stayForm.check_in_date,
         check_out_date: stayForm.check_out_date,
         additional_amount: amountChange,
       };
@@ -367,7 +398,11 @@ const fetchAvailableRooms = async () => {
       );
 
       let successMessage = "Stay dates updated successfully!";
-      if (changeType === "extension") {
+      if (checkInChanged && interval !== 0) {
+        successMessage = `Check-in and checkout dates updated successfully!${interval > 0 ? ` Additional charge: ₹${Math.abs(amountChange).toFixed(2)}` : ` Refund: ₹${Math.abs(amountChange).toFixed(2)}`}`;
+      } else if (checkInChanged) {
+        successMessage = "Check-in date updated successfully!";
+      } else if (changeType === "extension") {
         successMessage = `Stay extended by ${interval} days. Additional charge: ₹${Math.abs(amountChange).toFixed(2)}`;
       } else if (changeType === "reduction") {
         successMessage = `Stay reduced by ${Math.abs(interval)} days. Refund: ₹${Math.abs(amountChange).toFixed(2)}`;
@@ -545,7 +580,7 @@ const fetchAvailableRooms = async () => {
 
       setSuccess("Room changed successfully!");
       setChangeRoom(false);
-      setChangeRoomForm({ new_room_id: null, change_after_days: null });
+      setChangeRoomForm({ new_room_id: null, change_after_days: null, change_date: "" });
       fetchBooking();
       fetchServices();
       
@@ -985,8 +1020,164 @@ const fetchAvailableRooms = async () => {
           </div>
         </div>
 
+        {/* ROOM CHANGES HISTORY SECTION */}
+        {roomChanges.length > 0 && (
+          <div className="glass-card">
+            <div className="glass-card-body">
+              <h6 style={{ fontSize: "1.1rem", fontWeight: "700", marginBottom: "20px", display: "flex", alignItems: "center", gap: "8px" }}>
+                <ArrowRight size={20} style={{ color: "#2563eb" }} />
+                Room Change History
+              </h6>
+              <div style={{ background: "#f8fafc", borderRadius: "12px", overflow: "hidden" }}>
+                {roomChanges.map((change, index) => {
+                  // Calculate date ranges for the room change
+                  const checkInDate = new Date(booking.check_in_date);
+                  const checkOutDate = new Date(booking.check_out_date);
+                  
+                  let changeDate = null;
+                  let oldRoomEndDate = null;
+                  let newRoomStartDate = null;
+                  
+                  if (change.change_after_days !== null) {
+                    // Calculate the change date based on change_after_days
+                    changeDate = new Date(checkInDate);
+                    changeDate.setDate(changeDate.getDate() + change.change_after_days);
+                    oldRoomEndDate = new Date(changeDate);
+                    oldRoomEndDate.setDate(oldRoomEndDate.getDate() - 1);
+                    newRoomStartDate = changeDate;
+                  }
+
+                  return (
+                    <div 
+                      key={change.id} 
+                      style={{
+                        padding: "16px",
+                        borderBottom: index < roomChanges.length - 1 ? "1px solid #e2e8f0" : "none",
+                      }}
+                    >
+                      {/* Timeline indicator */}
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
+                        <div style={{
+                          width: "8px",
+                          height: "8px",
+                          borderRadius: "50%",
+                          background: "#2563eb",
+                          flexShrink: 0
+                        }}></div>
+                        <div>
+                          <small style={{ color: "#64748b", display: "block", marginBottom: "4px" }}>Changed On</small>
+                          <p style={{ margin: 0, fontWeight: "600", color: "#0f172a" }}>
+                            {new Date(change.changed_at).toLocaleDateString("en-IN", {
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit"
+                            })}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Room Change Details Grid */}
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
+                        {/* Old Room */}
+                        <div style={{ background: "#fff", padding: "12px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                          <div style={{ marginBottom: "12px" }}>
+                            <small style={{ color: "#64748b", display: "block", marginBottom: "6px", fontWeight: "600" }}>FROM: Room {change.old_room?.room_number || "—"}</small>
+                            <small style={{ color: "#64748b", display: "block" }}>({change.old_room?.room_type || "—"})</small>
+                          </div>
+                          
+                          {/* Date Range */}
+                          {oldRoomEndDate && (
+                            <div style={{ marginBottom: "10px", paddingBottom: "10px", borderBottom: "1px solid #e2e8f0" }}>
+                              <small style={{ color: "#64748b", display: "block", marginBottom: "4px" }}>Dates</small>
+                              <p style={{ margin: 0, fontSize: "0.9rem", fontWeight: "600", color: "#0f172a" }}>
+                                {formatDate(checkInDate)} to {formatDate(oldRoomEndDate)}
+                              </p>
+                              <small style={{ color: "#64748b", display: "block", marginTop: "2px" }}>
+                                ({calculateDays(checkInDate, oldRoomEndDate)} nights)
+                              </small>
+                            </div>
+                          )}
+                          
+                          {/* Price */}
+                          <div>
+                            <small style={{ color: "#64748b", display: "block", marginBottom: "4px" }}>Price per Night</small>
+                            <p style={{ margin: 0, fontWeight: "700", color: "#0f172a", fontSize: "1rem" }}>
+                              ₹{Number(change.old_room_price).toFixed(2)}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* New Room */}
+                        <div style={{ background: "#dbeafe", padding: "12px", borderRadius: "8px", border: "1px solid #bfdbfe" }}>
+                          <div style={{ marginBottom: "12px" }}>
+                            <small style={{ color: "#1e40af", display: "block", marginBottom: "6px", fontWeight: "600" }}>TO: Room {change.new_room?.room_number || "—"}</small>
+                            <small style={{ color: "#1e40af", display: "block" }}>({change.new_room?.room_type || "—"})</small>
+                          </div>
+                          
+                          {/* Date Range */}
+                          {newRoomStartDate && (
+                            <div style={{ marginBottom: "10px", paddingBottom: "10px", borderBottom: "1px solid #bfdbfe" }}>
+                              <small style={{ color: "#1e40af", display: "block", marginBottom: "4px" }}>Dates</small>
+                              <p style={{ margin: 0, fontSize: "0.9rem", fontWeight: "600", color: "#1e40af" }}>
+                                {formatDate(newRoomStartDate)} to {formatDate(checkOutDate)}
+                              </p>
+                              <small style={{ color: "#1e40af", display: "block", marginTop: "2px" }}>
+                                ({calculateDays(newRoomStartDate, checkOutDate)} nights)
+                              </small>
+                            </div>
+                          )}
+                          
+                          {/* Price */}
+                          <div>
+                            <small style={{ color: "#1e40af", display: "block", marginBottom: "4px" }}>Price per Night</small>
+                            <p style={{ margin: 0, fontWeight: "700", color: "#2563eb", fontSize: "1rem" }}>
+                              ₹{Number(change.new_room_price).toFixed(2)}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Amount Change Summary */}
+                      <div style={{
+                        padding: "12px",
+                        borderRadius: "8px",
+                        background: Number(change.new_total_amount) > Number(change.old_total_amount) ? "#fee2e2" : "#f0fdf4",
+                        border: `1px solid ${Number(change.new_total_amount) > Number(change.old_total_amount) ? "#fecaca" : "#bbf7d0"}`
+                      }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
+                          <div>
+                            <small style={{ color: "#64748b", display: "block", marginBottom: "4px" }}>Total Amount Change</small>
+                            <p style={{
+                              margin: 0,
+                              fontWeight: "700",
+                              color: Number(change.new_total_amount) > Number(change.old_total_amount) ? "#dc2626" : "#16a34a",
+                              fontSize: "1rem"
+                            }}>
+                              {Number(change.new_total_amount) > Number(change.old_total_amount) ? "+" : ""}₹{(Number(change.new_total_amount) - Number(change.old_total_amount)).toFixed(2)}
+                            </p>
+                          </div>
+                          <div style={{ textAlign: "right" }}>
+                            <small style={{ color: "#64748b", display: "block", marginBottom: "4px" }}>Old Total</small>
+                            <p style={{ margin: 0, fontWeight: "600", color: "#0f172a" }}>₹{Number(change.old_total_amount).toFixed(2)}</p>
+                          </div>
+                          <div style={{ textAlign: "right" }}>
+                            <small style={{ color: "#64748b", display: "block", marginBottom: "4px" }}>New Total</small>
+                            <p style={{ margin: 0, fontWeight: "700", color: "#2563eb" }}>₹{Number(change.new_total_amount).toFixed(2)}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* SERVICES SECTION */}
-        <div className="glass-card">
+        <div className="glass-card mt-4">
           <div className="glass-card-body">
             <div className="info-header">
               <div>
@@ -1287,13 +1478,34 @@ const fetchAvailableRooms = async () => {
           )}
           <Form onSubmit={updateStay}>
             <Form.Group className="form-group-modern">
-              <Form.Label className="form-label-modern">Check-in Date</Form.Label>
-              <Form.Control 
-                type="text"
-                readOnly
-                value={formatDate(stayForm.check_in_date)}
-                className="form-control-modern"
-              />
+              <Form.Label className="form-label-modern">
+                Check-in Date
+                {booking.status === "active" && <span style={{ color: "#16a34a", marginLeft: "4px" }}>*</span>}
+              </Form.Label>
+              {booking.status === "active" ? (
+                <Form.Control
+                  type="date"
+                  value={stayForm.check_in_date}
+                  onChange={(e) => setStayForm({ ...stayForm, check_in_date: e.target.value })}
+                  min={new Date().toISOString().split('T')[0]}
+                  max={stayForm.check_out_date}
+                  className="form-control-modern"
+                  required
+                />
+              ) : (
+                <>
+                  <Form.Control 
+                    type="text"
+                    readOnly
+                    value={formatDate(stayForm.check_in_date)}
+                    className="form-control-modern"
+                    style={{ backgroundColor: "#f1f5f9", cursor: "not-allowed" }}
+                  />
+                  <small style={{ color: "#64748b", display: "block", marginTop: "6px" }}>
+                    Can only edit when stay is active
+                  </small>
+                </>
+              )}
             </Form.Group>
 
             <Form.Group className="form-group-modern">
@@ -1312,29 +1524,64 @@ const fetchAvailableRooms = async () => {
                 type="date"
                 value={stayForm.check_out_date}
                 onChange={(e) => setStayForm({ ...stayForm, check_out_date: e.target.value })}
-                min={booking.check_in_date}
+                min={stayForm.check_in_date ? new Date(new Date(stayForm.check_in_date).getTime() + 24*60*60*1000).toISOString().split('T')[0] : booking.check_in_date}
                 className="form-control-modern"
                 required
               />
-              <small style={{ color: "#64748b", display: "block", marginTop: "6px" }}>Must be on or after check-in date</small>
             </Form.Group>
 
             {stayForm.check_out_date && stayForm.check_out_date !== booking.check_out_date && (
-              <div style={{ background: new Date(stayForm.check_out_date) > new Date(booking.check_out_date) ? "#eef2ff" : "#fef3c7", border: `1px solid ${new Date(stayForm.check_out_date) > new Date(booking.check_out_date) ? "#d1d5f7" : "#fcd34d"}`, padding: "16px", borderRadius: "12px", marginBottom: "20px" }}>
-                <h6 style={{ fontWeight: "700", marginBottom: "12px", color: new Date(stayForm.check_out_date) > new Date(booking.check_out_date) ? "#2563eb" : "#92400e" }}>
-                  {new Date(stayForm.check_out_date) > new Date(booking.check_out_date) ? "📈 Extension Summary" : "📉 Reduction Summary"}
-                </h6>
-                <div style={{ marginBottom: "10px" }}>
-                  <small style={{ color: "#64748b", display: "block" }}>Days {new Date(stayForm.check_out_date) > new Date(booking.check_out_date) ? "Added" : "Removed"}</small>
-                  <p style={{ fontWeight: "700", color: "#0f172a", marginBottom: 0 }}>{Math.abs(calculateDays(booking.check_out_date, stayForm.check_out_date))} days</p>
-                </div>
-                <div>
-                  <small style={{ color: "#64748b", display: "block" }}>{new Date(stayForm.check_out_date) > new Date(booking.check_out_date) ? "Additional Charge" : "Refund Amount"}</small>
-                  <p style={{ fontWeight: "700", color: new Date(stayForm.check_out_date) > new Date(booking.check_out_date) ? "#2563eb" : "#92400e", marginBottom: 0 }}>
-                    ₹{(Math.abs(calculateDays(booking.check_out_date, stayForm.check_out_date)) * (booking.room?.price || 0)).toFixed(2)}
-                  </p>
-                </div>
-              </div>
+              (() => {
+                // Detect if BOTH check_in_date and check_out_date are changed AND status is "active"
+                const bothDatesChanged = 
+                  stayForm.check_in_date !== booking.check_in_date && 
+                  stayForm.check_out_date !== booking.check_out_date && 
+                  booking.status === "active";
+
+                let summaryData;
+                if (bothDatesChanged) {
+                  // For both dates changed with active status: calculate based on new dates ONLY
+                  const newNights = calculateDays(stayForm.check_in_date, stayForm.check_out_date);
+                  const originalNights = calculateDays(booking.check_in_date, booking.check_out_date);
+                  const nightsDiff = newNights - originalNights;
+                  
+                  summaryData = {
+                    daysChanged: nightsDiff,
+                    daysChangeLabel: nightsDiff > 0 ? "Added" : nightsDiff < 0 ? "Removed" : "No Change",
+                    isExtension: nightsDiff > 0,
+                    isReduction: nightsDiff < 0,
+                    amountChange: nightsDiff * (booking.room?.price || 0),
+                  };
+                } else {
+                  // Original logic: only check_out_date changed
+                  const daysChanged = calculateDays(booking.check_out_date, stayForm.check_out_date);
+                  summaryData = {
+                    daysChanged: daysChanged,
+                    daysChangeLabel: daysChanged > 0 ? "Added" : "Removed",
+                    isExtension: new Date(stayForm.check_out_date) > new Date(booking.check_out_date),
+                    isReduction: new Date(stayForm.check_out_date) < new Date(booking.check_out_date),
+                    amountChange: daysChanged * (booking.room?.price || 0),
+                  };
+                }
+
+                return (
+                  <div style={{ background: summaryData.isExtension ? "#eef2ff" : "#fef3c7", border: `1px solid ${summaryData.isExtension ? "#d1d5f7" : "#fcd34d"}`, padding: "16px", borderRadius: "12px", marginBottom: "20px" }}>
+                    <h6 style={{ fontWeight: "700", marginBottom: "12px", color: summaryData.isExtension ? "#2563eb" : "#92400e" }}>
+                      {summaryData.isExtension ? "📈 Extension Summary" : summaryData.isReduction ? "📉 Reduction Summary" : "➡️ No Change Summary"}
+                    </h6>
+                    <div style={{ marginBottom: "10px" }}>
+                      <small style={{ color: "#64748b", display: "block" }}>Days {summaryData.daysChangeLabel}</small>
+                      <p style={{ fontWeight: "700", color: "#0f172a", marginBottom: 0 }}>{Math.abs(summaryData.daysChanged)} days</p>
+                    </div>
+                    <div>
+                      <small style={{ color: "#64748b", display: "block" }}>{summaryData.isExtension ? "Additional Charge" : summaryData.isReduction ? "Refund Amount" : "Amount"}</small>
+                      <p style={{ fontWeight: "700", color: summaryData.isExtension ? "#2563eb" : summaryData.isReduction ? "#92400e" : "#64748b", marginBottom: 0 }}>
+                        ₹{Math.abs(summaryData.amountChange).toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })()
             )}
 
             <Modal.Footer className="modern-modal-footer">
@@ -1641,6 +1888,56 @@ const fetchAvailableRooms = async () => {
                   {error}
                 </Alert>
               )}
+
+              {/* Previous Room Change History (if exists) */}
+              {roomChanges.length > 0 && (
+                <div style={{ background: "#fef3c7", padding: "16px", borderRadius: "12px", marginBottom: "20px", border: "1px solid #fcd34d" }}>
+                  <h6 style={{ fontWeight: "700", marginBottom: "12px", color: "#92400e", display: "flex", alignItems: "center", gap: "8px" }}>
+                    📋 Previous Room Change
+                  </h6>
+                  {(() => {
+                    const lastChange = roomChanges[0]; // First element is latest (ordered by desc)
+                    return (
+                      <div>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
+                          <div>
+                            <small style={{ color: "#92400e", display: "block", marginBottom: "4px" }}>From Room</small>
+                            <p style={{ fontWeight: "700", color: "#0f172a", margin: 0 }}>
+                              #{lastChange.old_room?.room_number} ({lastChange.old_room?.room_type})
+                            </p>
+                          </div>
+                          <div>
+                            <small style={{ color: "#92400e", display: "block", marginBottom: "4px" }}>To Room</small>
+                            <p style={{ fontWeight: "700", color: "#0f172a", margin: 0 }}>
+                              #{lastChange.new_room?.room_number} ({lastChange.new_room?.room_type})
+                            </p>
+                          </div>
+                          <div>
+                            <small style={{ color: "#92400e", display: "block", marginBottom: "4px" }}>Changed On</small>
+                            <p style={{ fontWeight: "700", color: "#0f172a", margin: 0 }}>
+                              {new Date(lastChange.changed_at).toLocaleDateString("en-IN", {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric"
+                              })}
+                            </p>
+                          </div>
+                          <div>
+                            <small style={{ color: "#92400e", display: "block", marginBottom: "4px" }}>Amount Change</small>
+                            <p style={{
+                              fontWeight: "700",
+                              color: Number(lastChange.new_total_amount) > Number(lastChange.old_total_amount) ? "#dc2626" : "#16a34a",
+                              margin: 0
+                            }}>
+                              {Number(lastChange.new_total_amount) > Number(lastChange.old_total_amount) ? "+" : ""}₹{(Number(lastChange.new_total_amount) - Number(lastChange.old_total_amount)).toFixed(2)}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
               
               {/* Current Room Info */}
               <div style={{ background: "#eef2ff", padding: "16px", borderRadius: "12px", marginBottom: "20px", border: "1px solid #d1d5f7" }}>
@@ -1695,19 +1992,46 @@ const fetchAvailableRooms = async () => {
               {/* Change After Days (for multi-day bookings) */}
               {calculateDays(booking.check_in_date, booking.check_out_date) > 1 && (
                 <Form.Group className="form-group-modern">
-                  <Form.Label className="form-label-modern">Change Room After How Many Days?</Form.Label>
+                  <Form.Label className="form-label-modern">Select Date to Change Room</Form.Label>
                   <Form.Control
-                    type="number"
-                    min="0"
-                    max={calculateDays(booking.check_in_date, booking.check_out_date) - 1}
-                    value={changeRoomForm.change_after_days ?? ""}
-                    onChange={(e) => setChangeRoomForm({ ...changeRoomForm, change_after_days: e.target.value })}
-                    placeholder="Enter number of days"
+                    type="date"
+                    min={booking.check_in_date}
+                    max={booking.check_out_date}
+                    value={changeRoomForm.change_date || ""}
+                    onChange={(e) => {
+                      const selectedDate = e.target.value;
+                      if (selectedDate) {
+                        // Validate date is within range
+                        const checkInDate = new Date(booking.check_in_date);
+                        const checkOutDate = new Date(booking.check_out_date);
+                        const selected = new Date(selectedDate);
+                        
+                        if (selected < checkInDate || selected > checkOutDate) {
+                          setError("Selected date must be between check-in and check-out dates");
+                          return;
+                        }
+                        
+                        // Calculate days difference from check-in to selected date
+                        const daysAfterCheckIn = Math.floor((selected - checkInDate) / (1000 * 60 * 60 * 24));
+                        setChangeRoomForm({ 
+                          ...changeRoomForm, 
+                          change_date: selectedDate,
+                          change_after_days: daysAfterCheckIn
+                        });
+                        setError(null);
+                      } else {
+                        setChangeRoomForm({ 
+                          ...changeRoomForm, 
+                          change_date: "",
+                          change_after_days: null
+                        });
+                      }
+                    }}
                     className="form-control-modern"
                     required
                   />
                   <small style={{ color: "#64748b", display: "block", marginTop: "6px" }}>
-                    <strong>0</strong> = Same-day change • <strong>1</strong> = After 1 day and so on (Max: {calculateDays(booking.check_in_date, booking.check_out_date) - 1} days)
+                    Select a date between {formatDate(booking.check_in_date)} and {formatDate(booking.check_out_date)}
                   </small>
                 </Form.Group>
               )}
@@ -1740,46 +2064,151 @@ const fetchAvailableRooms = async () => {
               {changeRoomForm.new_room_id && (
                 <div style={{ background: "#eef2ff", border: "1px solid #d1d5f7", padding: "16px", borderRadius: "12px", marginBottom: "20px" }}>
                   <h6 style={{ fontWeight: "700", marginBottom: "16px", color: "#2563eb" }}>💰 Pricing Breakdown</h6>
-                  {calculateDays(booking.check_in_date, booking.check_out_date) > 1 && changeRoomForm.change_after_days ? (
+                  {calculateDays(booking.check_in_date, booking.check_out_date) > 1 && changeRoomForm.change_after_days !== null ? (
                     <div>
-                      <Row className="g-3 mb-2">
-                        <Col md={6}>
-                          <small style={{ color: "#64748b", display: "block" }}>Current Room ({changeRoomForm.change_after_days} days)</small>
-                          <p style={{ fontWeight: "700", color: "#0f172a", margin: 0 }}>₹{(Number(changeRoomForm.change_after_days) * (booking.room?.price || 0)).toFixed(2)}</p>
-                        </Col>
-                        <Col md={6}>
-                          <small style={{ color: "#64748b", display: "block" }}>New Room ({calculateDays(booking.check_in_date, booking.check_out_date) - Number(changeRoomForm.change_after_days)} days)</small>
-                          <p style={{ fontWeight: "700", color: "#2563eb", margin: 0 }}>
-                            ₹{((calculateDays(booking.check_in_date, booking.check_out_date) - Number(changeRoomForm.change_after_days)) * (availableRooms.find(r => r.id === changeRoomForm.new_room_id)?.price || 0)).toFixed(2)}
-                          </p>
-                        </Col>
-                      </Row>
-                      <hr style={{ borderColor: "#d1d5f7", margin: "12px 0" }} />
-                      <Row className="g-3">
-                        <Col md={6}>
-                          <small style={{ color: "#64748b", display: "block" }}>Previous Total</small>
-                          <p style={{ fontWeight: "700", color: "#0f172a", margin: 0 }}>₹{Number(booking.total_amount).toFixed(2)}</p>
-                        </Col>
-                        <Col md={6}>
-                          <small style={{ color: "#64748b", display: "block" }}>New Total</small>
-                          <p style={{ fontWeight: "700", color: "#2563eb", margin: 0 }}>
-                            ₹{(
-                              (Number(changeRoomForm.change_after_days) * (booking.room?.price || 0)) +
-                              ((calculateDays(booking.check_in_date, booking.check_out_date) - Number(changeRoomForm.change_after_days)) * (availableRooms.find(r => r.id === changeRoomForm.new_room_id)?.price || 0))
-                            ).toFixed(2)}
-                          </p>
-                        </Col>
-                      </Row>
+                      {(() => {
+                        const totalNights = calculateDays(booking.check_in_date, booking.check_out_date);
+                        const totalDays = totalNights;
+
+                        // Sort existing changes by change_after_days asc
+                        const sortedChanges = [...roomChanges].sort((a, b) => (Number(a.change_after_days || 0) - Number(b.change_after_days || 0)));
+
+                        // Determine original room at check-in (old_room of first sorted change if exists)
+                        let originalRoomId = booking.room?.id;
+                        if (sortedChanges.length > 0 && sortedChanges[0].old_room) {
+                          originalRoomId = sortedChanges[0].old_room.id;
+                        }
+
+                        // Build price map from booking, availableRooms and change records
+                        const priceMap = {};
+                        if (booking.room) priceMap[booking.room.id] = Number(booking.room.price) || 0;
+                        (availableRooms || []).forEach(r => { priceMap[r.id] = Number(r.price) || priceMap[r.id] || 0; });
+                        sortedChanges.forEach(ch => {
+                          if (ch.old_room) priceMap[ch.old_room.id] = Number(ch.old_room_price || ch.old_room.price || priceMap[ch.old_room?.id] || 0);
+                          if (ch.new_room) priceMap[ch.new_room.id] = Number(ch.new_room_price || ch.new_room.price || priceMap[ch.new_room?.id] || 0);
+                        });
+
+                        // Build events (existing changes) and append the pending new change
+                        const events = sortedChanges.map(ch => ({ day: Number(ch.change_after_days), room_id: Number(ch.new_room_id), isNew: false }));
+                        // include new change
+                        events.push({ day: Number(changeRoomForm.change_after_days), room_id: Number(changeRoomForm.new_room_id), isNew: true });
+
+                        // Sort events by day asc
+                        events.sort((a, b) => a.day - b.day);
+
+                        // Compute segments
+                        const segments = [];
+                        let startDay = 0;
+                        let currentRoomId = originalRoomId;
+
+                        for (let i = 0; i < events.length; i++) {
+                          const ev = events[i];
+                          let day = ev.day;
+                          if (day < 0) day = 0;
+                          if (day > totalDays) day = totalDays;
+
+                          const segDays = Math.max(0, day - startDay);
+                          if (segDays > 0) {
+                            const price = Number(priceMap[currentRoomId] || 0);
+                            segments.push({ start: startDay, end: day, nights: segDays, room_id: currentRoomId, price, amount: segDays * price });
+                          }
+
+                          // advance
+                          startDay = day;
+                          currentRoomId = ev.room_id;
+                        }
+
+                        // final segment till checkout
+                        const finalDays = Math.max(0, totalDays - startDay);
+                        if (finalDays > 0) {
+                          const price = Number(priceMap[currentRoomId] || 0);
+                          segments.push({ start: startDay, end: totalDays, nights: finalDays, room_id: currentRoomId, price, amount: finalDays * price });
+                        }
+
+                        // services total
+                        const servicesTotal = (services || []).reduce((s, it) => s + Number(it.total_price || 0), 0);
+
+                        const roomChargesTotal = segments.reduce((s, seg) => s + seg.amount, 0);
+                        const newTotal = roomChargesTotal + servicesTotal;
+                        const difference = newTotal - Number(booking.total_amount || 0);
+
+                        return (
+                          <div>
+                            <div style={{ marginBottom: 12 }}>
+                              {segments.map((seg, idx) => {
+                                if (!seg || seg.nights === 0) return null;
+                                const segStartDt = new Date(booking.check_in_date);
+                                segStartDt.setDate(segStartDt.getDate() + seg.start);
+                                const segEndDt = new Date(booking.check_in_date);
+                                segEndDt.setDate(segEndDt.getDate() + seg.end - 1);
+                                const roomObj = (roomChanges.find(rc => rc.new_room?.id === seg.room_id) && roomChanges.find(rc => rc.new_room?.id === seg.room_id).new_room) || (booking.room && booking.room.id === seg.room_id ? booking.room : null);
+
+                                return (
+                                  <div key={idx} style={{ padding: 8, borderRadius: 8, background: idx % 2 === 0 ? '#fff' : '#f8fafc', marginBottom: 8, border: '1px solid #e6eefc' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                                      <div>
+                                        <small style={{ color: '#64748b', display: 'block', marginBottom: 4 }}>
+                                          {formatDate(segStartDt)} → {formatDate(segEndDt)}
+                                        </small>
+                                        <div style={{ fontWeight: 700, color: '#0f172a' }}>
+                                          Room {seg.room_id} {roomObj ? `(${roomObj.room_type || ''})` : ''}
+                                        </div>
+                                        <small style={{ color: '#64748b' }}>{seg.nights} night{seg.nights !== 1 ? 's' : ''}</small>
+                                      </div>
+                                      <div style={{ textAlign: 'right' }}>
+                                        <div style={{ fontWeight: 700, color: '#0f172a' }}>₹{Number(seg.price).toFixed(2)} × {seg.nights}</div>
+                                        <div style={{ fontWeight: 700, color: '#2563eb' }}>₹{Number(seg.amount).toFixed(2)}</div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+
+                            <hr style={{ borderColor: '#d1d5f7', margin: '12px 0' }} />
+
+                            <Row className="g-3">
+                              <Col md={6}>
+                                <small style={{ color: '#64748b', display: 'block', marginBottom: '4px' }}>Current Total</small>
+                                <p style={{ fontWeight: '700', color: '#0f172a', margin: 0 }}>₹{Number(booking.total_amount).toFixed(2)}</p>
+                              </Col>
+                              <Col md={6}>
+                                <small style={{ color: '#64748b', display: 'block', marginBottom: '4px' }}>New Total</small>
+                                <p style={{ fontWeight: '700', color: '#2563eb', margin: 0 }}>₹{Number(newTotal).toFixed(2)}</p>
+                              </Col>
+                            </Row>
+
+                            <hr style={{ borderColor: '#d1d5f7', margin: '12px 0' }} />
+                            <div style={{
+                              padding: '12px',
+                              borderRadius: '8px',
+                              background: difference > 0 ? '#fee2e2' : '#f0fdf4',
+                              border: `1px solid ${difference > 0 ? '#fecaca' : '#bbf7d0'}`
+                            }}>
+                              <small style={{ color: '#64748b', display: 'block', marginBottom: '4px' }}>Amount Change</small>
+                              <p style={{
+                                fontWeight: '700',
+                                color: difference > 0 ? '#dc2626' : difference < 0 ? '#16a34a' : '#64748b',
+                                margin: 0,
+                                fontSize: '1.1rem'
+                              }}>
+                                {difference > 0 ? '+' : ''}₹{Math.abs(difference).toFixed(2)}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    
                     </div>
                   ) : (
                     <div>
                       <Row className="g-3">
                         <Col md={6}>
-                          <small style={{ color: "#64748b", display: "block" }}>Current Total</small>
+                          <small style={{ color: "#64748b", display: "block", marginBottom: "4px" }}>Current Total</small>
                           <p style={{ fontWeight: "700", color: "#0f172a", margin: 0 }}>₹{Number(booking.total_amount).toFixed(2)}</p>
                         </Col>
                         <Col md={6}>
-                          <small style={{ color: "#64748b", display: "block" }}>New Room Price</small>
+                          <small style={{ color: "#64748b", display: "block", marginBottom: "4px" }}>New Room Price</small>
                           <p style={{ fontWeight: "700", color: "#2563eb", margin: 0 }}>
                             ₹{Number(availableRooms.find(r => r.id === changeRoomForm.new_room_id)?.price || 0).toFixed(2)}
                           </p>
@@ -1802,7 +2231,7 @@ const fetchAvailableRooms = async () => {
                 <button 
                   type="submit"
                   className="btn-submit"
-                  disabled={changeRoomLoading || !changeRoomForm.new_room_id || (calculateDays(booking.check_in_date, booking.check_out_date) > 1 && !changeRoomForm.change_after_days)}
+                  disabled={changeRoomLoading || !changeRoomForm.new_room_id || (calculateDays(booking.check_in_date, booking.check_out_date) > 1 && changeRoomForm.change_after_days === null)}
                 >
                   🚪 Change Room
                 </button>

@@ -8,6 +8,7 @@ import {
   Spinner,
   Row,
   Col,
+  InputGroup,
 } from 'react-bootstrap';
 import {
   DollarSign,
@@ -355,6 +356,7 @@ const BookingModal = ({
           no_of_people: bookingForm.no_of_people,
           duration_days: calculatedDurationDays,
           total_amount: totalAmount,
+          paid_amount: bookingForm.paid,
         });
         
         setBookingSuccess(true);
@@ -437,8 +439,8 @@ const BookingModal = ({
         Number of Nights:          ${submittedBookingData.duration_days}
         ────────────────────────────────────────────────────────────────
         Total Amount:              ₹${submittedBookingData.total_amount.toFixed(2)}
-        Amount Paid:               ₹${bookingForm.paid.toFixed(2)}
-        Amount Due:                ₹${(submittedBookingData.total_amount - bookingForm.paid).toFixed(2)}
+        Amount Paid:               ₹${Number(submittedBookingData.paid_amount).toFixed(2)}
+        Amount Due:                ₹${(submittedBookingData.total_amount - submittedBookingData.paid_amount).toFixed(2)}
         Payment Mode:              ${bookingForm.mode_of_payment}
 
         ════════════════════════════════════════════════════════════════
@@ -457,13 +459,13 @@ const BookingModal = ({
     };
 
     return (
-      <Modal show={show} onHide={handleCloseModal} centered size="md" className="receipt-modal" style={{ marginTop: '40px' }}>
+      <Modal show={show} onHide={handleCloseModal} centered size="md" className="receipt-modal" style={{ marginTop: '50px', maxHeight: '85vh', borderRadius: '8px' }}>
         <Modal.Header closeButton={!submitting} className="border-0 bg-light">
           <Modal.Title className="w-100 text-center">
             <h5 className="mb-0">📋 Booking Receipt</h5>
           </Modal.Title>
         </Modal.Header>
-        <Modal.Body className="pt-4" style={{ maxHeight: '90vh', overflowY: 'auto', padding: '24px' }}>
+        <Modal.Body className="pt-3" style={{ maxHeight: '70vh', overflowY: 'auto', padding: '16px' }}>
           {/* Receipt Container */}
           <div className="receipt-container" style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '24px' }}>
             
@@ -576,13 +578,13 @@ const BookingModal = ({
                   <span>TOTAL AMOUNT</span>
                   <span>₹{submittedBookingData.total_amount.toFixed(2)}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px', color: '#10b981' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '12px', color: '#10b981' }}>
                   <span>Amount Paid</span>
-                  <span style={{ fontWeight: '600' }}>₹{bookingForm.paid.toFixed(2)}</span>
+                  <span style={{ fontWeight: '600' }}>₹{Number(submittedBookingData.paid_amount).toFixed(2)}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#ef4444', fontWeight: '700' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#ef4444', fontWeight: '700' }}>
                   <span>Amount Due</span>
-                  <span>₹{(submittedBookingData.total_amount - bookingForm.paid).toFixed(2)}</span>
+                  <span>₹{(Number(submittedBookingData.total_amount) - Number(submittedBookingData.paid_amount)).toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -609,7 +611,7 @@ const BookingModal = ({
             </div>
           </div>
         </Modal.Body>
-        <Modal.Footer className="border-0 bg-light">
+        <Modal.Footer className="border-0 bg-light" style={{position:'sticky', bottom:"0", width:"100%"}}>
           <Button 
             variant="secondary" 
             onClick={handleCloseModal}
@@ -940,7 +942,6 @@ const BookingModal = ({
                 disabled={submitting}
                 className="form-select-lg border-2"
               >
-                <option value="Cash">💰 Cash</option>
                 <option value="Card">💳 Card</option>
                 <option value="UPI">📱 UPI</option>
               </Form.Select>
@@ -952,24 +953,29 @@ const BookingModal = ({
                 <IndianRupee size={16} className="d-inline me-1 text-primary" />
                 Amount to Pay Now (Minimum 10% Advance)
               </Form.Label>
-              <Form.Control
-                type="number"
-                name="paid"
-                value={bookingForm.paid}
-                onChange={handleInputChange}
-                placeholder={minimumAdvancePayment.toFixed(2)}
-                min={minimumAdvancePayment}
-                max={totalAmount}
-                step={0.01}
-                disabled={submitting}
-                className="form-control-lg border-2"
-                required
-              />
+              <InputGroup className="mb-2">
+                <InputGroup.Text className="bg-light border-2" style={{ borderColor: '#dee2e6' }}>
+                  <IndianRupee size={18} className="text-primary" />
+                </InputGroup.Text>
+                <Form.Control
+                  type="number"
+                  name="paid"
+                  value={bookingForm.paid}
+                  onChange={handleInputChange}
+                  placeholder={minimumAdvancePayment.toFixed(2)}
+                  min={minimumAdvancePayment}
+                  max={totalAmount}
+                  step={0.01}
+                  disabled={submitting}
+                  className="form-control-lg border-2"
+                  required
+                />
+              </InputGroup>
               <small className="text-muted d-block mt-2">
                 <strong>Minimum Advance (10%):</strong> ₹{minimumAdvancePayment.toFixed(2)}
               </small>
               <small className="text-muted d-block">
-                <strong>Remaining to Pay:</strong> ₹{(totalAmount - bookingForm.paid).toFixed(2)}
+                <strong>Remaining to Pay:</strong> ₹{Number(totalAmount - bookingForm.paid).toFixed(2)}
               </small>
             </Form.Group>
           </div>
