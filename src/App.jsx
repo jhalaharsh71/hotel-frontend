@@ -26,6 +26,7 @@ import Services from "./Admin/Pages/Services";
 import Guests from "./Admin/Pages/Guests";
 import Reports from "./Admin/Pages/Reports";
 import Reviews from "./Admin/Pages/Reviews";
+import HotelSettings from "./Admin/Pages/HotelSettings";
 
 import SuperAdmin from "./SuperAdmin/SuperAdmin";
 import Hotel from "./SuperAdmin/Pages/Hotel/Hotel";
@@ -83,6 +84,7 @@ function App() {
           <Route path="/admin/checkouts" element={<TodaysCheckout />} />
           <Route path="/admin/reports" element={<Reports />} />
           <Route path="/admin/reviews" element={<Reviews />} />
+          <Route path="/admin/hotel-settings" element={<HotelSettings />} />
         </Route>
       </Route>
 

@@ -90,6 +90,9 @@ const YourBookings = () => {
     return duration > 0 ? duration : 0;
   };
 
+  // Format as "X day(s)/night(s)" for display-only purposes
+  const formatDayNight = (n) => `${n} day${n === 1 ? '' : 's'}/night${n === 1 ? '' : 's'}`;
+
   // ===== GET STATUS BADGE COLOR =====
   const getStatusBadgeColor = (status) => {
     switch (status?.toLowerCase()) {
@@ -248,6 +251,15 @@ const YourBookings = () => {
                 const paidAmount = Number(booking.paid_amount) || 0;
                 const dueAmount = totalAmount - paidAmount;
 
+                // Find active banner image for the hotel (do not show inactive images)
+                const bannerUrl = booking.hotel?.galleries?.find(
+                  (g) => g && g.is_banner_image && g.is_active && g.image_url
+                )?.image_url;
+
+                const headerStyle = bannerUrl
+                  ? { backgroundImage: `url(${bannerUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', padding: '16px', color: 'white' }
+                  : { background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', padding: '16px', color: 'white' };
+
                 return (
                   <Col md={6} lg={4} key={booking.id}>
                     <Card
@@ -270,13 +282,7 @@ const YourBookings = () => {
                       }}
                     >
                       {/* CARD HEADER WITH STATUS */}
-                      <div
-                        style={{
-                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                          padding: '16px',
-                          color: 'white',
-                        }}
-                      >
+                      <div style={headerStyle}>
                         <div className="d-flex justify-content-between align-items-start gap-2">
                           <div>
                             <h6 style={{ fontSize: '12px', fontWeight: '600', opacity: 0.9, marginBottom: '4px' }}>
@@ -345,7 +351,7 @@ const YourBookings = () => {
                           >
                             <Clock size={16} style={{ color: '#667eea', flexShrink: 0 }} />
                             <span>
-                              <strong>{duration}</strong> {duration === 1 ? 'night' : 'nights'}
+                              <strong>{formatDayNight(duration)}</strong>
                             </span>
                           </div>
 

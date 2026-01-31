@@ -52,15 +52,44 @@ const HotelDetails = () => {
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Dynamic hotel content
+  const [aboutHotel, setAboutHotel] = useState('');
+  const [roomFeatures, setRoomFeatures] = useState([]);
+  const [facilities, setFacilities] = useState([]);
+  const [galleries, setGalleries] = useState([]);
+
   // Booking modal state
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
 
+  // Image slider state
+  const [showImageSlider, setShowImageSlider] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
   // ===== LOAD INITIAL CITIES ON MOUNT =====
   useEffect(() => {
     fetchHotelDetails();
+    fetchHotelSettings();
     fetchReviews();
   }, [hotelId]);
+
+  // ===== KEYBOARD NAVIGATION FOR IMAGE SLIDER =====
+  useEffect(() => {
+    if (!showImageSlider) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        handleCloseSlider();
+      } else if (e.key === 'ArrowLeft') {
+        handlePreviousImage();
+      } else if (e.key === 'ArrowRight') {
+        handleNextImage();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showImageSlider]);
 
   const fetchReviews = async () => {
     try {
@@ -72,6 +101,29 @@ const HotelDetails = () => {
       setReviews([]);
     } finally {
       setReviewsLoading(false);
+    }
+  };
+
+  /**
+   * Fetch hotel settings (about, features, facilities, galleries)
+   */
+  const fetchHotelSettings = async () => {
+    try {
+      const res = await axios.get(`${API_BASE}/hotels/${hotelId}/settings`);
+      if (res.data.success && res.data.data) {
+        const data = res.data.data;
+        setAboutHotel(data.about_hotel || '');
+        setRoomFeatures(Array.isArray(data.room_features) ? data.room_features : []);
+        setFacilities(Array.isArray(data.facilities) ? data.facilities : []);
+        setGalleries(Array.isArray(data.galleries) ? data.galleries : []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch hotel settings', err);
+      // Set default values if API fails
+      setAboutHotel('');
+      setRoomFeatures([]);
+      setFacilities([]);
+      setGalleries([]);
     }
   };
 
@@ -128,17 +180,30 @@ const HotelDetails = () => {
 
   // ===== GET HOTEL GALLERY IMAGES =====
   const getHotelGalleryImages = () => {
-    return [
-      'https://images.pexels.com/photos/1457842/pexels-photo-1457842.jpeg?w=400&h=300&fit=crop',
-      'https://images.pexels.com/photos/338504/pexels-photo-338504.jpeg?w=400&h=300&fit=crop',
-      'https://images.pexels.com/photos/2121121/pexels-photo-2121121.jpeg?w=400&h=300&fit=crop',
-      'https://images.pexels.com/photos/279746/pexels-photo-279746.jpeg?w=400&h=300&fit=crop',
-    ];
+    // Return dynamic gallery images from database, or fallback to defaults
+    if (galleries.length > 0) {
+      // Only include galleries that provide a valid `image_url` (backend guarantees fully-qualified URLs)
+      return galleries
+        .filter((g) => g && g.image_url)
+        .map((g) => ({ id: g.id, url: g.image_url, isBanner: g.is_banner_image }));
+    }
+
+    // No fallback images — per requirements do not auto-fallback to placeholders
+    return [];
   };
 
   // ===== GET MAIN HOTEL IMAGE =====
   const getMainHotelImage = () => {
-    return "https://images.pexels.com/photos/2121121/pexels-photo-2121121.jpeg?w=1200&h=500&fit=crop";
+    // Return banner image from database if available
+    if (galleries.length > 0) {
+      const bannerImage = galleries.find((g) => g.is_banner_image && g.image_url);
+      if (bannerImage) return bannerImage.image_url;
+      const first = galleries.find((g) => g.image_url);
+      if (first) return first.image_url;
+    }
+
+    // No main image available — return null and let caller decide rendering
+    return null;
   };
 
   // ===== OPEN BOOKING MODAL =====
@@ -165,6 +230,34 @@ const HotelDetails = () => {
     navigate(-1);
   };
 
+  // ===== IMAGE SLIDER HANDLERS =====
+  const handleGalleryImageClick = (index) => {
+    setCurrentImageIndex(index);
+    setShowImageSlider(true);
+    // Prevent body scroll when slider is open
+    document.body.style.overflow = 'hidden';
+  };
+
+  const handleCloseSlider = () => {
+    setShowImageSlider(false);
+    // Restore body scroll
+    document.body.style.overflow = 'unset';
+  };
+
+  const handlePreviousImage = () => {
+    const galleryImages = getHotelGalleryImages();
+    setCurrentImageIndex((prevIndex) => 
+      prevIndex === 0 ? galleryImages.length - 1 : prevIndex - 1
+    );
+  };
+
+  const handleNextImage = () => {
+    const galleryImages = getHotelGalleryImages();
+    setCurrentImageIndex((prevIndex) => 
+      prevIndex === galleryImages.length - 1 ? 0 : prevIndex + 1
+    );
+  };
+
   // ===== CALCULATE DURATION =====
   const calculateDuration = () => {
     if (!searchParams.check_in_date || !searchParams.check_out_date) {
@@ -177,6 +270,9 @@ const HotelDetails = () => {
   };
 
   const durationDays = calculateDuration();
+
+  // Format as "X day(s)/night(s)" for display-only purposes
+  const formatDayNight = (n) => `${n} day${n === 1 ? '' : 's'}/night${n === 1 ? '' : 's'}`;
 
   // ===== CALCULATE AVERAGE RATING =====
   const getAverageRating = () => {
@@ -254,210 +350,173 @@ const HotelDetails = () => {
       <Header />
 
       <div className="hotel-details-page">
-        {/* ===== MAIN HOTEL IMAGE HERO ===== */}
-        <div
-          className="position-relative"
-          style={{
-            height: '400px',
-            backgroundColor: '#e2e8f0',
-            overflow: 'hidden',
-          }}
-        >
-          <img
-            src={getMainHotelImage()}
-            alt={hotel?.name}
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              objectPosition: 'center',
-            }}
-            onError={(e) => {
-              e.target.src = 'https://images.pexels.com/photos/338504/pexels-photo-338504.jpeg?w=1200&h=500&fit=crop';
-            }}
-          />
-          <div
-            className="position-absolute top-0 start-0 w-100 h-100"
-            style={{
-              backgroundColor: 'rgba(0, 0, 0, 0.3)',
-            }}
-          />
-          <Container className="h-100 d-flex align-items-end pb-4 position-absolute start-0 bottom-0" style={{ zIndex: 1 }}>
-            <div style={{ marginLeft: "8%" }}>
-              <h1 className="text-white fw-bold mb-2">{hotel?.name}</h1>
-              {reviews.length > 0 && (
-                <div className="d-flex align-items-center gap-2">
-                  <div className="d-flex gap-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        size={20}
-                        style={{
-                          fill: i < Math.round(averageRating) ? '#fbbf24' : '#d1d5db',
-                          color: i < Math.round(averageRating) ? '#fbbf24' : '#d1d5db',
-                        }}
-                      />
-                    ))}
-                  </div>
-                  <span style={{ color: '#fef3c7', fontSize: '1.1rem', fontWeight: '600' }}>
-                    {averageRating} ({reviews.length} review{reviews.length !== 1 ? 's' : ''})
-                  </span>
+        {/* ===== MODERN HERO BANNER ===== */}
+        <div className="hotel-hero-banner">
+          {(() => {
+            const mainImage = getMainHotelImage();
+            if (mainImage) {
+              return <img src={mainImage} alt={hotel?.name} />;
+            }
+            console.warn('No main hotel image available for hotel', hotel?.id);
+            return null;
+          })()}
+          <div className="hotel-hero-overlay" />
+          <div className="hotel-hero-content">
+            <h1>{hotel?.name}</h1>
+            {reviews.length > 0 && (
+              <div className="hotel-rating-badge">
+                <div className="star-group">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      size={20}
+                      style={{
+                        fill: i < Math.round(averageRating) ? '#fbbf24' : '#d1d5db',
+                        color: i < Math.round(averageRating) ? '#fbbf24' : '#d1d5db',
+                      }}
+                    />
+                  ))}
                 </div>
-              )}
-            </div>
-          </Container>
+                <span>
+                  {averageRating} ({reviews.length} review{reviews.length !== 1 ? 's' : ''})
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
-        <Container className="py-5">
-          {/* ===== HEADER WITH BACK BUTTON ===== */}
-          <Row className="mb-4">
-            <Col>
-              <Button
-                variant="light"
-                size="lg"
-                onClick={handleGoBack}
-                className="d-flex align-items-center gap-2 mb-3"
-              >
-                <ChevronLeft size={20} />
-                Back to Results
-              </Button>
-            </Col>
-          </Row>
+        <Container className="hotel-content-wrapper">
+          {/* ===== BACK BUTTON ===== */}
+          <button
+            onClick={handleGoBack}
+            className="btn-back"
+            title="Go back to results"
+          >
+            <ChevronLeft size={20} />
+            Back to Results
+          </button>
 
-          {/* ===== HOTEL INFO SECTION ===== */}
-          <Row className="mb-5">
+          {/* ===== HOTEL INFO & BOOKING SIDEBAR ===== */}
+          <Row className="g-4">
+            {/* ===== MAIN CONTENT COLUMN ===== */}
             <Col lg={8}>
-              <Card className="shadow-sm border-0 mb-4">
-                <Card.Body className="p-4">
-
+              {/* ===== HOTEL INFORMATION CARD ===== */}
+              <Card className="mb-4">
+                <Card.Body>
+                  {/* ===== BASIC INFO ===== */}
                   <div className="mb-4">
-                    <div className="d-flex gap-3 flex-wrap">
-                      <div className="d-flex align-items-start gap-2">
-                        <MapPin size={20} className="text-primary flex-shrink-0 mt-1" />
-                        <div>
-                          <small className="text-muted d-block">Address</small>
-                          <p className="mb-0">
-                            {hotel.address}, {hotel.city}
-                          </p>
-                          <small className="text-muted">
-                            {hotel.state}, {hotel.country}
-                          </small>
-                        </div>
+                    <div className="info-block">
+                      <MapPin size={20} className="info-icon" />
+                      <div className="info-content">
+                        <small>Location</small>
+                        <p>
+                          {hotel.address}, {hotel.city}
+                        </p>
+                        <small style={{ color: 'var(--text-light)' }}>
+                          {hotel.state}, {hotel.country}
+                        </small>
                       </div>
+                    </div>
 
-                      <div className="d-flex align-items-start gap-2">
-                        <Phone size={20} className="text-primary flex-shrink-0 mt-1" />
-                        <div>
-                          <small className="text-muted d-block">Contact</small>
-                          <p className="mb-0">{hotel.contact_no}</p>
-                        </div>
+                    <div className="info-block">
+                      <Phone size={20} className="info-icon" />
+                      <div className="info-content">
+                        <small>Contact Number</small>
+                        <p>{hotel.contact_no}</p>
                       </div>
                     </div>
                   </div>
 
-                  <hr />
+                  <hr style={{ margin: '24px 0', border: 'none', borderTop: '1px solid var(--border-light)' }} />
 
-                  <div className="mb-4">
-                    <h6 className="fw-bold mb-3">About This Hotel</h6>
-                    <p className="text-muted mb-3">
-                      {hotel.description ||
-                        'Welcome to our premium hotel offering world-class accommodations and exceptional service. Located in a prime area, our hotel provides the perfect blend of comfort, convenience, and luxury.'}
-                    </p>
-                  </div>
-
-                  <div className="mb-4">
-                    <h6 className="fw-bold mb-3">Room Features & Amenities</h6>
-                    <div className="row g-3">
-                      <div className="col-md-6">
-                        <ul className="list-unstyled text-muted small">
-                          <li className="mb-2">✓ Air-conditioned rooms with climate control</li>
-                          <li className="mb-2">✓ Premium bedding and comfortable furniture</li>
-                          <li className="mb-2">✓ Modern en-suite bathrooms with amenities</li>
-                          <li className="mb-2">✓ Flat-screen TV with satellite channels</li>
-                        </ul>
-                      </div>
-                      <div className="col-md-6">
-                        <ul className="list-unstyled text-muted small">
-                          <li className="mb-2">✓ High-speed WiFi in all rooms</li>
-                          <li className="mb-2">✓ Work desk for business travelers</li>
-                          <li className="mb-2">✓ In-room dining services available</li>
-                          <li className="mb-2">✓ Daily housekeeping service</li>
-                        </ul>
+                  {/* ===== ABOUT HOTEL ===== */}
+                  {aboutHotel && (
+                    <div className="mb-4">
+                      <div className="about-hotel-section">
+                        <h6>About This Hotel</h6>
+                        <p>{aboutHotel}</p>
                       </div>
                     </div>
-                  </div>
+                  )}
 
-                  <div className="mb-4">
-                    <h6 className="fw-bold mb-3">Hotel Facilities & Services</h6>
-                    <div className="row g-3">
-                      <div className="col-md-6">
-                        <ul className="list-unstyled text-muted small">
-                          <li className="mb-2">🍽️ Multi-cuisine restaurant</li>
-                          <li className="mb-2">☕ Coffee shop and bar</li>
-                          <li className="mb-2">💪 Fitness center and gym</li>
-                          <li className="mb-2">🏊 Swimming pool</li>
-                        </ul>
-                      </div>
-                      <div className="col-md-6">
-                        <ul className="list-unstyled text-muted small">
-                          <li className="mb-2">🛎️ 24/7 front desk service</li>
-                          <li className="mb-2">🚖 Airport shuttle available</li>
-                          <li className="mb-2">📋 Business center</li>
-                          <li className="mb-2">🅿️ Ample parking facilities</li>
-                        </ul>
+                  {/* ===== ROOM FEATURES ===== */}
+                  {roomFeatures.length > 0 && (
+                    <div className="mb-4">
+                      <h6 style={{ marginBottom: '16px' }}>Room Features & Amenities</h6>
+                      <div className="amenities-grid">
+                        {roomFeatures.map((feature) => (
+                          <div key={feature.id} className="amenity-item">
+                            <span className="amenity-icon">
+                              {feature.feature_icon || '✓'}
+                            </span>
+                            <p className="amenity-name">{feature.feature_title}</p>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  </div>
+                  )}
+
+                  {/* ===== HOTEL FACILITIES ===== */}
+                  {facilities.length > 0 && (
+                    <div className="mb-4">
+                      <h6 style={{ marginBottom: '16px' }}>Hotel Facilities & Services</h6>
+                      <div className="amenities-grid">
+                        {facilities.map((facility) => (
+                          <div key={facility.id} className="amenity-item">
+                            <span className="amenity-icon">{facility.facility_icon}</span>
+                            <p className="amenity-name">{facility.facility_name}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </Card.Body>
               </Card>
 
-              {/* ===== HOTEL PHOTOS SECTION ===== */}
-              <Card className="shadow-sm border-0 mb-5">
-                <Card.Body className="p-4">
-                  <h5 className="fw-bold mb-4">Hotel Gallery</h5>
-                  <Row className="g-3">
-                    {getHotelGalleryImages().map((imageUrl, index) => (
-                      <Col sm={6} key={index}>
-                        <div
-                          className="bg-light rounded overflow-hidden"
-                          style={{
-                            height: '200px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#ccc',
-                            fontSize: '14px',
-                          }}
-                        >
+              {/* ===== HOTEL GALLERY ===== */}
+              <Card className="mb-5">
+                <Card.Body>
+                  <h5 style={{ marginBottom: '24px' }}>Hotel Gallery</h5>
+                  <div className="gallery-grid">
+                    {getHotelGalleryImages().map((image, index) => (
+                      <div
+                        key={image.id || index}
+                        className="gallery-item"
+                        onClick={() => handleGalleryImageClick(index)}
+                      >
+                        {image.url ? (
                           <img
-                            src={imageUrl}
+                            src={image.url}
                             alt={`Hotel Gallery ${index + 1}`}
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'cover',
-                            }}
-                            onError={(e) => {
-                              e.target.src = 'https://images.unsplash.com/photo-1564501049351-005e2b74b9a9?w=400&h=300&fit=crop';
-                            }}
                           />
-                        </div>
-                      </Col>
+                        ) : (
+                          (console.warn('Gallery image missing url', image), null)
+                        )}
+                        <div className="gallery-overlay" />
+                      </div>
                     ))}
-                  </Row>
+                  </div>
+                  {getHotelGalleryImages().length === 0 && (
+                    <div className="empty-state">
+                      <p>No gallery images available</p>
+                    </div>
+                  )}
                 </Card.Body>
               </Card>
             </Col>
 
             {/* ===== BOOKING SUMMARY SIDEBAR ===== */}
             <Col lg={4}>
-              <Card className="shadow-sm border-0 sticky-top" style={{ top: '20px' }}>
-                <Card.Body className="p-4">
-                  <h5 className="fw-bold mb-4">Booking Summary</h5>
+              <Card className="booking-summary-card sticky-top" style={{ top: '20px' }}>
+                <Card.Body>
+                  <div className="booking-summary-title">Booking Summary</div>
 
-                  <div className="mb-3 pb-3 border-bottom">
-                    <small className="text-muted d-block">Check-in</small>
-                    <p className="mb-0 fw-semibold">
+                  <div className="summary-item">
+                    <small className="summary-label">
+                      <Calendar size={14} className="me-1" style={{ verticalAlign: 'middle' }} />
+                      Check-in Date
+                    </small>
+                    <p className="summary-value">
                       {searchParams.check_in_date
                         ? new Date(searchParams.check_in_date).toLocaleDateString(
                             'en-US',
@@ -472,9 +531,12 @@ const HotelDetails = () => {
                     </p>
                   </div>
 
-                  <div className="mb-3 pb-3 border-bottom">
-                    <small className="text-muted d-block">Check-out</small>
-                    <p className="mb-0 fw-semibold">
+                  <div className="summary-item">
+                    <small className="summary-label">
+                      <Calendar size={14} className="me-1" style={{ verticalAlign: 'middle' }} />
+                      Check-out Date
+                    </small>
+                    <p className="summary-value">
                       {searchParams.check_out_date
                         ? new Date(searchParams.check_out_date).toLocaleDateString(
                             'en-US',
@@ -489,14 +551,20 @@ const HotelDetails = () => {
                     </p>
                   </div>
 
-                  <div className="mb-3 pb-3 border-bottom">
-                    <small className="text-muted d-block">Duration</small>
-                    <p className="mb-0 fw-semibold">{durationDays} nights</p>
+                  <div className="summary-item">
+                    <small className="summary-label">
+                      <Calendar size={14} className="me-1" style={{ verticalAlign: 'middle' }} />
+                      Duration
+                    </small>
+                    <p className="summary-value">{formatDayNight(durationDays)}</p>
                   </div>
 
-                  <div className="mb-0">
-                    <small className="text-muted d-block">Guests</small>
-                    <p className="mb-0 fw-semibold">
+                  <div className="summary-item">
+                    <small className="summary-label">
+                      <Users size={14} className="me-1" style={{ verticalAlign: 'middle' }} />
+                      Number of Guests
+                    </small>
+                    <p className="summary-value">
                       {searchParams.no_of_people} {searchParams.no_of_people === 1 ? 'person' : 'people'}
                     </p>
                   </div>
@@ -506,118 +574,96 @@ const HotelDetails = () => {
           </Row>
 
           {/* ===== ROOMS SECTION ===== */}
-          <Row>
-            <Col>
-              <h3 className="mb-4 fw-bold d-flex align-items-center gap-2">
-                <BookOpen size={28} className="text-primary" />
-                Available Room Types
-              </h3>
-            </Col>
-          </Row>
+          <div style={{ marginTop: '48px' }}>
+            <h3>
+              <BookOpen size={28} />
+              Available Room Types
+            </h3>
+          </div>
 
           {rooms.length > 0 ? (
-            <Row className="g-4">
+            <Row className="g-4" style={{ marginTop: '24px' }}>
               {Object.entries(groupRoomsByType()).map(([roomType, roomList]) => {
                 const firstRoom = roomList[0];
                 const availableCount = roomList.length;
 
                 return (
                   <Col md={6} lg={4} key={roomType}>
-                    <Card className="h-100 shadow-sm room-card hover-shadow">
+                    <Card className="room-card">
                       {/* Room Image */}
-                      <div
-                        className="bg-light overflow-hidden"
-                        style={{
-                          height: '180px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: '#ccc',
-                          fontSize: '14px',
-                        }}
-                      >
+                      <div className="room-card-image">
                         <img
                           src={getRoomImageUrl(roomType)}
                           alt={roomType}
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                          }}
                           onError={(e) => {
                             e.target.src = 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=500&h=300&fit=crop';
                           }}
                         />
                       </div>
 
-                      <Card.Body className="d-flex flex-column">
+                      <Card.Body className="room-card-body">
+                        {/* Room Type & Availability */}
                         <div className="mb-3">
-                          <Card.Title className="mb-2">
-                            <h5 className="mb-0">{roomType}</h5>
-                          </Card.Title>
-                          <Badge bg="info">
+                          <h5 className="room-type-title">{roomType}</h5>
+                          <span className="room-availability">
                             {availableCount} room{availableCount > 1 ? 's' : ''} available
-                          </Badge>
+                          </span>
                         </div>
 
-                        {/* Room Details */}
-                        <div className="mb-4 flex-grow-1">
-                          <div className="mb-3">
-                            <div className="d-flex align-items-center gap-2 mb-2">
-                              <Users size={18} className="text-primary" />
-                              <span>
-                                Capacity: {firstRoom.min_people} - {firstRoom.max_people} people
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="p-3 bg-light rounded">
-                            <div className="d-flex justify-content-between align-items-center mb-3">
-                              <div>
-                                <small className="text-muted d-block">Price per night</small>
-                                <div className="d-flex align-items-center gap-2">
-                                  <h5 className="mb-0">₹{firstRoom.price_per_day}</h5>
-                                  <span style={{ textDecoration: 'line-through', color: '#999', fontSize: '0.9rem' }}>
-                                    ₹{(firstRoom.price_per_day * 1.4).toFixed(0)}
-                                  </span>
-                                  <Badge bg="danger" style={{ fontSize: '0.75rem' }}>40% OFF</Badge>
-                                </div>
-                              </div>
-                            </div>
-                            {durationDays > 0 && (
-                              <div className="pt-2 border-top">
-                                <small className="text-muted d-block">Total for {durationDays} nights</small>
-                                <div className="d-flex align-items-center gap-2">
-                                  <p className="mb-0 fw-bold text-success" style={{ fontSize: '1.2rem' }}>
-                                    ₹{(firstRoom.price_per_day * durationDays).toFixed(2)}
-                                  </p>
-                                  <span style={{ textDecoration: 'line-through', color: '#999', fontSize: '0.9rem' }}>
-                                    ₹{(firstRoom.price_per_day * 1.4 * durationDays).toFixed(0)}
-                                  </span>
-                                </div>
-                              </div>
-                            )}
-                          </div>
+                        {/* Room Capacity */}
+                        <div className="room-capacity">
+                          <Users size={18} />
+                          <span>
+                            Capacity: {firstRoom.min_people} - {firstRoom.max_people} guests
+                          </span>
                         </div>
 
-                        <Button
-                          variant="primary"
-                          size="lg"
-                          className="w-100"
+                        {/* Pricing Box */}
+                        <div className="pricing-box">
+                          <span className="price-label">Price per night</span>
+                          <div className="price-display">
+                            <div className="price-main">
+                              <span className="price-currency">₹</span>
+                              {firstRoom.price_per_day}
+                            </div>
+                            <span className="price-original">
+                              ₹{(firstRoom.price_per_day * 1.4).toFixed(0)}
+                            </span>
+                            <span className="price-discount">40% OFF</span>
+                          </div>
+
+                          {durationDays > 0 && (
+                            <div className="price-total">
+                              <span className="price-label">Total for {formatDayNight(durationDays)}</span>
+                              <div className="price-display">
+                                <div className="price-total-amount">
+                                  ₹{(firstRoom.price_per_day * durationDays).toFixed(2)}
+                                </div>
+                                <span className="price-original">
+                                  ₹{(firstRoom.price_per_day * 1.4 * durationDays).toFixed(0)}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Book Now Button */}
+                        <button
+                          className="btn-book-now"
                           onClick={() => handleBookNow(firstRoom)}
                           disabled={
                             searchParams.no_of_people < firstRoom.min_people ||
                             searchParams.no_of_people > firstRoom.max_people
                           }
                         >
-                          <BookOpen size={18} className="me-2" />
+                          <BookOpen size={18} />
                           Book Now
-                        </Button>
+                        </button>
 
                         {(searchParams.no_of_people < firstRoom.min_people ||
                           searchParams.no_of_people > firstRoom.max_people) && (
-                          <small className="text-danger d-block mt-2 text-center">
-                            Not suitable for {searchParams.no_of_people} people
+                          <small style={{ color: 'var(--danger-color)', display: 'block', marginTop: '12px', textAlign: 'center' }}>
+                            Not suitable for {searchParams.no_of_people} {searchParams.no_of_people === 1 ? 'guest' : 'guests'}
                           </small>
                         )}
                       </Card.Body>
@@ -627,103 +673,76 @@ const HotelDetails = () => {
               })}
             </Row>
           ) : (
-            <Alert variant="info" className="text-center py-5">
-              <AlertCircle size={48} className="mb-3 mx-auto d-block" />
+            <div className="empty-state" style={{ marginTop: '24px' }}>
+              <AlertCircle size={48} className="empty-state-icon" />
               <h5>No Rooms Available</h5>
-              <p className="mb-0">
-                This hotel doesn't have any rooms available at the moment.
-              </p>
-            </Alert>
+              <p>This hotel doesn't have any rooms available at the moment.</p>
+            </div>
           )}
 
           {/* ===== REVIEWS SECTION ===== */}
-          <div style={{ marginTop: '48px', paddingTop: '48px', borderTop: '2px solid #e2e8f0' }}>
-            <h3 className="mb-4 fw-bold d-flex align-items-center gap-2">
-              <Star size={28} className="text-warning" />
+          <div className="reviews-section">
+            <h3>
+              <Star size={28} />
               Guest Reviews ({reviews.length})
             </h3>
 
             {reviewsLoading ? (
-              <div style={{ textAlign: 'center', padding: '48px 20px' }}>
+              <div style={{ textAlign: 'center', padding: '60px 20px' }}>
                 <Spinner animation="border" variant="primary" size="lg" />
               </div>
             ) : reviews.length > 0 ? (
-              <Row className="g-4">
+              <Row className="g-4" style={{ marginTop: '24px' }}>
                 {reviews.map((review) => (
                   <Col lg={6} key={review.id}>
-                    <Card className="h-100 shadow-sm" style={{ borderRadius: '12px', border: 'none' }}>
-                      <Card.Body>
-                        {/* Rating Stars */}
-                        <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <div style={{ display: 'flex', gap: '4px' }}>
-                            {[...Array(5)].map((_, i) => (
-                              <Star
-                                key={i}
-                                size={18}
-                                style={{
-                                  fill: i < review.rating ? '#fbbf24' : '#d1d5db',
-                                  color: i < review.rating ? '#fbbf24' : '#d1d5db',
-                                }}
-                              />
-                            ))}
-                          </div>
-                          <Badge bg="light" text="dark" style={{ marginLeft: '8px' }}>
-                            {review.rating}/5
-                          </Badge>
+                    <div className="review-card">
+                      {/* Rating Stars */}
+                      <div className="review-rating">
+                        <div className="review-stars">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              size={18}
+                              style={{
+                                fill: i < review.rating ? '#fbbf24' : '#d1d5db',
+                                color: i < review.rating ? '#fbbf24' : '#d1d5db',
+                              }}
+                            />
+                          ))}
                         </div>
+                        <Badge bg="light" text="dark" style={{ fontSize: '0.8rem' }}>
+                          {review.rating}/5
+                        </Badge>
+                      </div>
 
-                        {/* Title */}
-                        {review.title && (
-                          <h6 style={{
-                            fontWeight: '600',
-                            color: '#0f172a',
-                            margin: 0,
-                            marginBottom: '8px',
-                            fontSize: '1rem',
-                          }}>
-                            {review.title}
-                          </h6>
-                        )}
+                      {/* Title */}
+                      {review.title && (
+                        <h6 className="review-title">{review.title}</h6>
+                      )}
 
-                        {/* Comment */}
-                        <p style={{
-                          color: '#64748b',
-                          marginBottom: '12px',
-                          lineHeight: '1.6',
-                          fontSize: '0.95rem',
-                        }}>
-                          {review.comment}
-                        </p>
+                      {/* Comment */}
+                      <p className="review-comment">{review.comment}</p>
 
-                        {/* Meta Info */}
-                        <div style={{
-                          borderTop: '1px solid #e2e8f0',
-                          paddingTop: '12px',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          fontSize: '0.85rem',
-                          color: '#94a3b8',
-                        }}>
-                          <div>
-                            <strong style={{ color: '#0f172a' }}>{review.user_name}</strong>
-                            {' '}• {review.room_type} Room
-                          </div>
-                          <span>{review.created_at_formatted}</span>
+                      {/* Meta Info */}
+                      <div className="review-meta">
+                        <div>
+                          <span className="review-author">{review.user_name}</span>
+                          <span> • {review.room_type} Room</span>
                         </div>
-                      </Card.Body>
-                    </Card>
+                        <span>{review.created_at_formatted}</span>
+                      </div>
+                    </div>
                   </Col>
                 ))}
               </Row>
             ) : (
-              <Alert variant="info" className="text-center py-5">
-                {/* <Star size={48} className="mb-3 mx-auto d-block text-muted" style={{ opacity: 0.5 }} /> */}
-                <h5>No Reviews Yet.   <span style={{fontSize:'1rem', color:'#058940'}}>
+              <div className="empty-state" style={{ marginTop: '24px' }}>
+                <Star size={48} className="empty-state-icon" style={{ color: 'var(--text-light)', opacity: 0.5 }} />
+                <h5>No Reviews Yet</h5>
+                <p style={{ color: 'var(--success-color)', fontWeight: '500' }}>
                   Be the first to share your experience at this hotel!
-                </span></h5>
-                
-              </Alert>
+                </p>
+              </div>
             )}
           </div>
         </Container>
@@ -743,7 +762,331 @@ const HotelDetails = () => {
         />
       )}
 
+      {/* ===== IMAGE SLIDER MODAL ===== */}
+      {showImageSlider && (
+        <ImageSliderModal
+          images={getHotelGalleryImages()}
+          currentIndex={currentImageIndex}
+          onClose={handleCloseSlider}
+          onPrevious={handlePreviousImage}
+          onNext={handleNextImage}
+          hotelName={hotel?.name}
+        />
+      )}
+
       <Footer />
+    </>
+  );
+};
+
+/**
+ * ImageSliderModal Component
+ * Displays a centered modal image slider with navigation controls
+ * Supports keyboard and touch/swipe gestures
+ */
+const ImageSliderModal = ({ images, currentIndex, onClose, onPrevious, onNext, hotelName }) => {
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+
+  // Minimum swipe distance in pixels
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      onNext();
+    } else if (isRightSwipe) {
+      onPrevious();
+    }
+  };
+
+  if (!images || images.length === 0) return null;
+
+  const currentImage = images[currentIndex];
+
+  return (
+    <>
+      {/* ===== DARK OVERLAY ===== */}
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.85)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+        onClick={onClose}
+      />
+
+      {/* ===== MODERN MODAL CONTAINER ===== */}
+      <div
+        style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '95vw',
+          maxWidth: '1000px',
+          height: '85vh',
+          maxHeight: '800px',
+          backgroundColor: 'var(--bg-white)',
+          borderRadius: 'var(--radius-lg)',
+          zIndex: 10000,
+          display: 'flex',
+          flexDirection: 'column',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.4)',
+          overflow: 'hidden',
+        }}
+        onClick={(e) => e.stopPropagation()}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
+        {/* ===== HEADER ===== */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '16px 24px',
+            borderBottom: '1px solid var(--border-light)',
+            backgroundColor: 'var(--bg-light)',
+          }}
+        >
+          <h6 style={{
+            color: 'var(--text-dark)',
+            margin: 0,
+            fontSize: '1.1rem',
+            fontWeight: '600',
+          }}>
+            {hotelName}
+          </h6>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <span style={{
+              color: 'var(--text-light)',
+              fontSize: '0.9rem',
+              fontWeight: '500',
+            }}>
+              {currentIndex + 1} / {images.length}
+            </span>
+            <button
+              onClick={onClose}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-light)',
+                fontSize: '24px',
+                cursor: 'pointer',
+                padding: '4px 8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '36px',
+                height: '36px',
+                transition: 'all 0.2s ease',
+                borderRadius: 'var(--radius-sm)',
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = 'var(--border-light)';
+                e.target.style.color = 'var(--text-dark)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = 'transparent';
+                e.target.style.color = 'var(--text-light)';
+              }}
+              title="Close (Esc)"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
+        {/* ===== IMAGE CONTAINER ===== */}
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#000000',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          {currentImage && (
+            <img
+              src={currentImage.url}
+              alt={`Hotel Gallery ${currentIndex + 1}`}
+              style={{
+                maxWidth: '100%',
+                maxHeight: '100%',
+                objectFit: 'contain',
+                animation: 'fadeIn 0.3s ease-in-out',
+              }}
+            />
+          )}
+
+          {/* ===== NAVIGATION ARROWS ===== */}
+          {images.length > 1 && (
+            <>
+              <button
+                onClick={onPrevious}
+                style={{
+                  position: 'absolute',
+                  left: '16px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  border: '2px solid rgba(255, 255, 255, 0.3)',
+                  color: '#fff',
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '50%',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s ease',
+                  zIndex: 10001,
+                  backdropFilter: 'blur(8px)',
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = 'rgba(255, 255, 255, 0.25)';
+                  e.target.style.transform = 'translateY(-50%) scale(1.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = 'rgba(255, 255, 255, 0.15)';
+                  e.target.style.transform = 'translateY(-50%) scale(1)';
+                }}
+                title="Previous (← Arrow)"
+              >
+                ‹
+              </button>
+
+              <button
+                onClick={onNext}
+                style={{
+                  position: 'absolute',
+                  right: '16px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  border: '2px solid rgba(255, 255, 255, 0.3)',
+                  color: '#fff',
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '50%',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s ease',
+                  zIndex: 10001,
+                  backdropFilter: 'blur(8px)',
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = 'rgba(255, 255, 255, 0.25)';
+                  e.target.style.transform = 'translateY(-50%) scale(1.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = 'rgba(255, 255, 255, 0.15)';
+                  e.target.style.transform = 'translateY(-50%) scale(1)';
+                }}
+                title="Next (→ Arrow)"
+              >
+                ›
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* ===== INDICATOR DOTS ===== */}
+        {images.length > 1 && (
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '20px',
+              backgroundColor: 'var(--bg-light)',
+              borderTop: '1px solid var(--border-light)',
+              flexWrap: 'wrap',
+            }}
+          >
+            {images.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => {
+                  const diff = idx - currentIndex;
+                  if (diff > 0) {
+                    for (let i = 0; i < diff; i++) onNext();
+                  } else if (diff < 0) {
+                    for (let i = 0; i < -diff; i++) onPrevious();
+                  }
+                }}
+                style={{
+                  width: idx === currentIndex ? '12px' : '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  border: 'none',
+                  backgroundColor:
+                    idx === currentIndex ? 'var(--text-dark)' : 'var(--border-light)',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  padding: 0,
+                }}
+                onMouseEnter={(e) => {
+                  if (idx !== currentIndex) {
+                    e.target.style.backgroundColor = 'var(--text-light)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (idx !== currentIndex) {
+                    e.target.style.backgroundColor = 'var(--border-light)';
+                  }
+                }}
+                title={`Go to image ${idx + 1}`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ===== ANIMATIONS ===== */}
+      <style>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+      `}</style>
     </>
   );
 };

@@ -1,10 +1,48 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
+import axios from "axios";
 import "./Sidebar.css";
+import { ADMIN_API } from "../config/api";
 
 const Sidebar = ({ isOpen, toggleSidebar, sidebarWidth, isDesktop }) => {
   const location = useLocation();
   const [expandedMenus, setExpandedMenus] = useState({});
+  const [hotelName, setHotelName] = useState("Hotel Admin");
+  const [hotelLoading, setHotelLoading] = useState(true);
+
+  // Fetch hotel name on component mount
+  useEffect(() => {
+    fetchHotelName();
+  }, []);
+
+  const fetchHotelName = async () => {
+    try {
+      setHotelLoading(true);
+      const token = localStorage.getItem("admin_token");
+      
+      if (!token) {
+        setHotelLoading(false);
+        return;
+      }
+
+      // Fetch hotel name (controller now returns { data: { id, name } })
+      const response = await axios.get(`${ADMIN_API}/hotel/name`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      // Controller now returns name at data.name (not data.hotel.name)
+      if (response.data.success && response.data.data?.name) {
+        setHotelName(response.data.data.name);
+      }
+    } catch (error) {
+      // Silently fail - keep default "Hotel Admin" text if fetch fails
+      console.error("Failed to fetch hotel name:", error);
+    } finally {
+      setHotelLoading(false);
+    }
+  };
 
   const menuItems = [
     { name: "Dashboard", path: "/admin", icon: "bi-speedometer2", color: "#3b82f6" },
@@ -15,6 +53,7 @@ const Sidebar = ({ isOpen, toggleSidebar, sidebarWidth, isDesktop }) => {
     { name: "Today's Check-ins", path: "/admin/checkins", icon: "bi-box-arrow-in-right", color: "#061af4"},
     { name: "Today's Checkouts", path: "/admin/checkouts", icon: "bi-box-arrow-right", color: "#f70606" },
     { name: "Reviews", path: "/admin/reviews", icon: "bi-person-badge", color: "#f97316" },
+    { name: "About Hotel", path: "/admin/hotel-settings", icon: "bi-info-circle", color: "#8b5cf6" },
     { name: "Reports", path: "/admin/reports", icon: "bi-graph-up-arrow", color: "#ef4444" },
     
   ];
@@ -50,7 +89,9 @@ const Sidebar = ({ isOpen, toggleSidebar, sidebarWidth, isDesktop }) => {
       {/* Header */}
       <div className="d-flex align-items-center justify-content-between px-4 py-3 border-bottom border-secondary">
         <div>
-          <h5 className="mb-0 fw-bold text-white">Hotel Admin</h5>
+          <h5 className="mb-0 fw-bold text-white">
+            {hotelLoading ? "Loading..." : hotelName}
+          </h5>
           <small className="text-secondary">Management Panel</small>
         </div>
 

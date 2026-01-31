@@ -13,6 +13,16 @@
   flex-direction: column;
 }
 
+/* Hide scrollbar */
+aside::-webkit-scrollbar {
+  display: none;
+}
+
+.aside {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Collapsed */
 .sidebar.collapsed {
   width: 70px;

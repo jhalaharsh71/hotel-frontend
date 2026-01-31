@@ -28,11 +28,25 @@ const API_BASE = USER_API;
 const CheckHotel = () => {
   const navigate = useNavigate();
 
-  // ===== STATE MANAGEMENT =====
+  // ===== DATE PREFILL LOGIC =====
+  // Get today's date in YYYY-MM-DD format
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const todayStr = `${yyyy}-${mm}-${dd}`;
+  // Next day's date
+  const nextDay = new Date(today);
+  nextDay.setDate(today.getDate() + 1);
+  const nextYyyy = nextDay.getFullYear();
+  const nextMm = String(nextDay.getMonth() + 1).padStart(2, '0');
+  const nextDd = String(nextDay.getDate()).padStart(2, '0');
+  const nextDayStr = `${nextYyyy}-${nextMm}-${nextDd}`;
+
   const [searchForm, setSearchForm] = useState({
     city: '',
-    check_in_date: '',
-    check_out_date: '',
+    check_in_date: todayStr,
+    check_out_date: nextDayStr,
     no_of_people: 1,
   });
 
@@ -117,12 +131,25 @@ const CheckHotel = () => {
   };
 
   // ===== FORM HANDLERS =====
+  // ===== DATE CHANGE HANDLER WITH AUTO-ADJUST =====
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setSearchForm((prev) => ({
-      ...prev,
-      [name]: name === 'no_of_people' ? parseInt(value) : value,
-    }));
+    setSearchForm((prev) => {
+      let updated = { ...prev, [name]: name === 'no_of_people' ? parseInt(value) : value };
+      // If check-in changes, auto-adjust check-out if needed
+      if (name === 'check_in_date') {
+        if (new Date(updated.check_out_date) <= new Date(value)) {
+          // Set check-out to next day after check-in
+          const inDate = new Date(value);
+          inDate.setDate(inDate.getDate() + 1);
+          const y = inDate.getFullYear();
+          const m = String(inDate.getMonth() + 1).padStart(2, '0');
+          const d = String(inDate.getDate()).padStart(2, '0');
+          updated.check_out_date = `${y}-${m}-${d}`;
+        }
+      }
+      return updated;
+    });
     setError(null);
   };
 
@@ -181,8 +208,7 @@ const CheckHotel = () => {
     });
   };
 
-  // Get today's date in YYYY-MM-DD format
-  const today = new Date().toISOString().split('T')[0];
+  // ...existing code...
 
   return (
     <div className="check-hotel-overlay">
@@ -262,12 +288,13 @@ const CheckHotel = () => {
                           <Calendar size={16} className="text-primary" />
                           Check-in
                         </Form.Label>
+                        {/* Native date picker with prefilled value and min=today */}
                         <Form.Control
                           type="date"
                           name="check_in_date"
                           value={searchForm.check_in_date}
                           onChange={handleInputChange}
-                          min={today}
+                          min={todayStr}
                           className="search-input"
                           required
                         />
@@ -281,12 +308,13 @@ const CheckHotel = () => {
                           <Calendar size={16} className="text-primary" />
                           Check-out
                         </Form.Label>
+                        {/* Native date picker with prefilled value and min=check-in */}
                         <Form.Control
                           type="date"
                           name="check_out_date"
                           value={searchForm.check_out_date}
                           onChange={handleInputChange}
-                          min={searchForm.check_in_date || today}
+                          min={searchForm.check_in_date}
                           className="search-input"
                           required
                         />

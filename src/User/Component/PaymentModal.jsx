@@ -131,7 +131,7 @@ const PaymentModal = ({
   // ===== SUCCESS STATE =====
   if (paymentStatus === 'success') {
     return (
-      <Modal show={show} onHide={() => {}} centered size="sm" backdrop="static" keyboard={false}>
+      <Modal show={show} onHide={() => {}} centered size="sm" backdrop="static" keyboard={false} style={{marginTop:'40px'}}>
         <Modal.Body className="text-center py-5">
           <div className="mb-4">
             <CheckCircle size={64} className="text-success mx-auto d-block mb-3" />
@@ -150,7 +150,7 @@ const PaymentModal = ({
 
   // ===== PAYMENT FORM =====
   return (
-    <Modal show={show} onHide={handleCancel} centered size="lg" className="payment-modal" backdrop="static" keyboard={false}>
+    <Modal show={show} onHide={handleCancel} centered size="lg" className="payment-modal" backdrop="static" keyboard={false} style={{marginTop:'40px'}}>
       <Modal.Header className="border-0 pb-0">
         <Modal.Title className="fw-bold">
           <div className="d-flex align-items-center gap-2">

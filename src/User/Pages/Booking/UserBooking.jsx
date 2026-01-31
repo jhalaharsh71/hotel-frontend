@@ -49,11 +49,25 @@ const UserBooking = () => {
   const location = useLocation();
   const token = localStorage.getItem('user_token');
 
-  // ===== STATE MANAGEMENT =====
+  // ===== DATE PREFILL LOGIC =====
+  // Get today's date in YYYY-MM-DD format
+  const _today = new Date();
+  const yyyy = _today.getFullYear();
+  const mm = String(_today.getMonth() + 1).padStart(2, '0');
+  const dd = String(_today.getDate()).padStart(2, '0');
+  const todayStr = `${yyyy}-${mm}-${dd}`;
+  // Next day's date
+  const nextDay = new Date(_today);
+  nextDay.setDate(_today.getDate() + 1);
+  const nextYyyy = nextDay.getFullYear();
+  const nextMm = String(nextDay.getMonth() + 1).padStart(2, '0');
+  const nextDd = String(nextDay.getDate()).padStart(2, '0');
+  const nextDayStr = `${nextYyyy}-${nextMm}-${nextDd}`;
+
   const [availabilityForm, setAvailabilityForm] = useState({
     city: '',
-    check_in_date: '',
-    check_out_date: '',
+    check_in_date: todayStr,
+    check_out_date: nextDayStr,
     no_of_people: 1,
   });
 
@@ -111,8 +125,8 @@ const UserBooking = () => {
       const { city, check_in_date, check_out_date, no_of_people } = location.state;
       setAvailabilityForm({
         city: city || '',
-        check_in_date: check_in_date || '',
-        check_out_date: check_out_date || '',
+        check_in_date: check_in_date || todayStr,
+        check_out_date: check_out_date || nextDayStr,
         no_of_people: no_of_people || 1,
       });
       setCityInput(city || '');
@@ -240,12 +254,25 @@ const UserBooking = () => {
   }, [token]);
 
   // ===== FORM HANDLERS =====
+  // ===== DATE CHANGE HANDLER WITH AUTO-ADJUST =====
   const handleAvailabilityChange = (e) => {
     const { name, value } = e.target;
-    setAvailabilityForm((prev) => ({
-      ...prev,
-      [name]: name === 'no_of_people' ? parseInt(value) : value,
-    }));
+    setAvailabilityForm((prev) => {
+      let updated = { ...prev, [name]: name === 'no_of_people' ? parseInt(value) : value };
+      // If check-in changes, auto-adjust check-out if needed
+      if (name === 'check_in_date') {
+        if (new Date(updated.check_out_date) <= new Date(value)) {
+          // Set check-out to next day after check-in
+          const inDate = new Date(value);
+          inDate.setDate(inDate.getDate() + 1);
+          const y = inDate.getFullYear();
+          const m = String(inDate.getMonth() + 1).padStart(2, '0');
+          const d = String(inDate.getDate()).padStart(2, '0');
+          updated.check_out_date = `${y}-${m}-${d}`;
+        }
+      }
+      return updated;
+    });
     setError(null);
   };
 
@@ -459,7 +486,18 @@ const UserBooking = () => {
   };
 
   // ===== GET HOTEL IMAGE URL =====
-  const getHotelImageUrl = (hotelIndex) => {
+  const getHotelImageUrl = (hotel, hotelIndex) => {
+    // Try to get active banner image from hotel galleries
+    if (hotel && hotel.galleries && Array.isArray(hotel.galleries)) {
+      const bannerImage = hotel.galleries.find(
+        (g) => g && g.is_banner_image && g.is_active && g.image_url
+      );
+      if (bannerImage && bannerImage.image_url) {
+        return bannerImage.image_url;
+      }
+    }
+
+    // Fallback to placeholder images
     const hotelImages = [
       'https://images.pexels.com/photos/338504/pexels-photo-338504.jpeg?w=500&h=300&fit=crop',
       'https://images.pexels.com/photos/2121121/pexels-photo-2121121.jpeg?w=500&h=300&fit=crop',
@@ -473,8 +511,7 @@ const UserBooking = () => {
     return hotelImages[hotelIndex % hotelImages.length];
   };
 
-  // Get today's date in YYYY-MM-DD format
-  const today = new Date().toISOString().split('T')[0];
+  // ...existing code...
 
   return (
     <>
@@ -656,12 +693,13 @@ const UserBooking = () => {
                   <Form.Label style={{ color: '#e2e8f0', fontSize: '0.9rem', fontWeight: '600', marginBottom: '6px' }}>
                     Check-in Date
                   </Form.Label>
+                  {/* Native date picker with prefilled value and min=today */}
                   <Form.Control
                     type="date"
                     name="check_in_date"
                     value={availabilityForm.check_in_date}
                     onChange={handleAvailabilityChange}
-                    min={today}
+                    min={todayStr}
                     style={{
                       borderRadius: '8px',
                       border: '1px solid rgba(226, 232, 240, 0.3)',
@@ -680,12 +718,13 @@ const UserBooking = () => {
                   <Form.Label style={{ color: '#e2e8f0', fontSize: '0.9rem', fontWeight: '600', marginBottom: '6px' }}>
                     Check-out Date
                   </Form.Label>
+                  {/* Native date picker with prefilled value and min=check-in */}
                   <Form.Control
                     type="date"
                     name="check_out_date"
                     value={availabilityForm.check_out_date}
                     onChange={handleAvailabilityChange}
-                    min={availabilityForm.check_in_date || today}
+                    min={availabilityForm.check_in_date}
                     style={{
                       borderRadius: '8px',
                       border: '1px solid rgba(226, 232, 240, 0.3)',
@@ -1085,7 +1124,7 @@ const UserBooking = () => {
                             }}
                           >
                             <img
-                              src={getHotelImageUrl(hotelIndex)}
+                              src={getHotelImageUrl(hotel, hotelIndex)}
                               alt={hotel.hotel_name}
                               style={{
                                 width: '100%',

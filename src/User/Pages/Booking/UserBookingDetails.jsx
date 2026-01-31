@@ -52,6 +52,9 @@ const calculateDays = (checkIn, checkOut) => {
   return Math.ceil((check_out - check_in) / (1000 * 60 * 60 * 24));
 };
 
+// Format as "X day(s)/night(s)" for display-only purposes
+const formatDayNight = (n) => `${n} day${n === 1 ? '' : 's'}/night${n === 1 ? '' : 's'}`;
+
 export default function UserBookingDetails() {
   const { bookingId } = useParams();
   const navigate = useNavigate();
@@ -389,7 +392,7 @@ export default function UserBookingDetails() {
             }}>
               <div style={{ fontSize: '0.85rem', color: '#15803d', fontWeight: '700', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Duration</div>
               <div style={{ fontSize: '1.4rem', fontWeight: '800', color: '#0f172a' }}>
-                {calculateDays(booking.check_in_date, booking.check_out_date)} nights
+                {formatDayNight(calculateDays(booking.check_in_date, booking.check_out_date))}
               </div>
             </div>
 
@@ -698,7 +701,7 @@ export default function UserBookingDetails() {
                         fontWeight: '600',
                         margin: 0,
                       }}>
-                        {calculateDays(booking.check_in_date, booking.check_out_date)} nights
+                        {formatDayNight(calculateDays(booking.check_in_date, booking.check_out_date))}
                       </p>
                     </div>
                   </div>

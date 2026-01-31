@@ -53,6 +53,9 @@ const BookingModal = ({
 
   // Guests state: array of guest objects rendered based on no_of_people
   const [guests, setGuests] = useState([]);
+  // Existing guests fetched via bookings belonging to current user
+  const [existingGuests, setExistingGuests] = useState([]);
+  const [loadingExistingGuests, setLoadingExistingGuests] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -107,18 +110,52 @@ const BookingModal = ({
       setSubmittedBookingData(null);
       // initialize guests array based on no_of_people
       const initialCount = noOfPeople || 1;
-      const initialGuests = Array.from({ length: initialCount }).map((_, i) => ({
-        first_name: '',
-        last_name: '',
-        gender: '',
-        age: '',
-        phone: '',
-        email: '',
-        is_primary: i === 0 ? true : false,
-      }));
-      setGuests(initialGuests);
+          const initialGuests = Array.from({ length: initialCount }).map((_, i) => ({
+            first_name: '',
+            last_name: '',
+            gender: '',
+            age: '',
+            phone: '',
+            email: '',
+            is_primary: i === 0 ? true : false,
+            guest_id: '', // Added guest_id initialization
+          }));
+          setGuests(initialGuests);
+          setError(null);
+          setSuccessMessage(null);
+          setBookingSuccess(false);
+          setBookingId(null);
+          setSubmittedBookingData(null);
+          // Fetch existing guests for this user (derived via bookings)
+          fetchExistingGuests();
     }
   }, [show, checkInDate, checkOutDate, noOfPeople, durationDays, room.price_per_day]);
+
+  // Fetch existing guests that belong to current user via bookings
+  const fetchExistingGuests = async () => {
+    if (!token) return;
+    try {
+      setLoadingExistingGuests(true);
+      const res = await axios.get(`${API_BASE}/guests`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.data && Array.isArray(res.data.guests)) {
+        setExistingGuests(res.data.guests);
+      } else {
+        setExistingGuests([]);
+      }
+    } catch (err) {
+      console.error('Failed to fetch existing guests', err);
+      setExistingGuests([]);
+    } finally {
+      setLoadingExistingGuests(false);
+    }
+  };
+
+  // Helper: get set of currently selected guest IDs across forms
+  const getSelectedGuestIds = () => {
+    return guests.map((g) => String(g.guest_id)).filter((id) => id && id !== '');
+  };
 
   // Keep guests array length in sync when no_of_people changes in the form
   useEffect(() => {
@@ -137,6 +174,7 @@ const BookingModal = ({
           phone: '',
           email: '',
           is_primary: prevCount + i === 0 ? true : false,
+          guest_id: '', // Ensure guest_id is included
         }));
         return [...prev, ...toAdd];
       }
@@ -164,6 +202,68 @@ const BookingModal = ({
       return copy;
     });
     setError(null);
+  };
+
+  // When user selects an existing guest from dropdown, autofill that specific guest form
+  const handleSelectExistingGuest = (index, e) => {
+    const guestId = e.target.value;
+    
+    if (!guestId) {
+      return; // cleared selection
+    }
+    
+    const g = existingGuests.find((x) => String(x.id) === String(guestId));
+    if (!g) return;
+
+    // Update ONLY the guest form at the specified index
+    setGuests((prev) => {
+      const copy = [...prev];
+      copy[index] = {
+        first_name: g.first_name || '',
+        last_name: g.last_name || '',
+        gender: g.gender || '',
+        age: g.age || '',
+        phone: g.phone || '',
+        email: g.email || '',
+        is_primary: copy[index]?.is_primary || false,
+        guest_id: g.id || '', // Store the guest ID to prevent re-selection
+      };
+      return copy;
+    });
+
+    // If this is the primary guest (index 0), sync top-level bookingForm fields
+    if (index === 0) {
+      setBookingForm((b) => ({
+        ...b,
+        customer_name: `${g.first_name || ''} ${g.last_name || ''}`.trim(),
+        phone: g.phone || b.phone,
+        email: g.email || b.email,
+      }));
+    }
+  };
+
+  const clearExistingGuestSelection = (index) => {
+    // Clear only the guest form at the specified index
+    setGuests((prev) => {
+      const copy = [...prev];
+      if (!copy[index]) return copy;
+      copy[index] = {
+        first_name: '',
+        last_name: '',
+        gender: '',
+        age: '',
+        phone: '',
+        email: '',
+        is_primary: copy[index].is_primary,
+        guest_id: '', // Clear the guest ID
+      };
+      return copy;
+    });
+    
+    // If this is the primary guest (index 0), clear top-level bookingForm fields
+    if (index === 0) {
+      setBookingForm((b) => ({ ...b, customer_name: '', phone: '', email: '' }));
+    }
   };
 
   // ===== FORM HANDLERS =====
@@ -459,13 +559,13 @@ const BookingModal = ({
     };
 
     return (
-      <Modal show={show} onHide={handleCloseModal} centered size="md" className="receipt-modal" style={{ marginTop: '50px', maxHeight: '85vh', borderRadius: '8px' }}>
+      <Modal show={show} onHide={handleCloseModal} centered size="md" className="receipt-modal" style={{ marginTop: '50px', maxHeight: '92vh', borderRadius: '8px' }}>
         <Modal.Header closeButton={!submitting} className="border-0 bg-light">
           <Modal.Title className="w-100 text-center">
             <h5 className="mb-0">📋 Booking Receipt</h5>
           </Modal.Title>
         </Modal.Header>
-        <Modal.Body className="pt-3" style={{ maxHeight: '70vh', overflowY: 'auto', padding: '16px' }}>
+        <Modal.Body className="pt-3" style={{ maxHeight: '75vh', overflowY: 'auto', padding: '16px' }}>
           {/* Receipt Container */}
           <div className="receipt-container" style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '24px' }}>
             
@@ -645,56 +745,64 @@ const BookingModal = ({
       />
 
       {/* Booking Form Modal */}
-      <Modal show={show} onHide={handleCloseModal} centered size="md" className="booking-modal" dialogClassName="modal-responsive" style={{ marginTop: '40px' }}>
-        <Modal.Header closeButton={!submitting} className="border-0 pb-0">
-          <Modal.Title className="fs-5 fw-bold">
-            <div className="d-flex align-items-center gap-2">
-              <CreditCard size={24} className="text-primary" />
-              Complete Your Booking
+      <Modal show={show} onHide={handleCloseModal} centered size="lg" className="booking-modal" dialogClassName="modal-responsive" style={{ marginTop: '60px' }}>
+        <Modal.Header closeButton={!submitting} className="border-0 pb-3 pt-4 px-4" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+          <Modal.Title className="fs-5 fw-bold text-white w-100">
+            <div className="d-flex align-items-center gap-3">
+              <div style={{ background: 'rgba(255,255,255,0.2)', padding: '12px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <CreditCard size={28} className="text-white" />
+              </div>
+              <div>
+                <div style={{ fontSize: '18px', fontWeight: '700' }}>Complete Your Booking</div>
+                <div style={{ fontSize: '12px', opacity: '0.9', marginTop: '4px' }}>Fill in the details below to proceed</div>
+              </div>
             </div>
           </Modal.Title>
         </Modal.Header>
 
-        <Modal.Body className="pt-4" style={{ maxHeight: 'calc(100vh - 150px)', overflowY: 'auto' }}>
+        <Modal.Body className="pt-0" style={{ maxHeight: 'calc(100vh - 150px)', overflowY: 'auto', background: '#f8fafc' }}>
         {/* Hotel & Room Header Card */}
-        <div className="card border-0 shadow-sm mb-4" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+        <div className="card border-0 shadow-sm m-4 mb-4" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: '16px' }}>
           <div className="card-body text-white">
-            <h5 className="card-title mb-3 fw-bold">{hotel.name}</h5>
-            <Row className="g-3">
-              <Col xs={6}>
-                <small className="d-block opacity-80">Room Type</small>
-                <p className="mb-0 fw-semibold fs-6">{room.room_type}</p>
-              </Col>
-              <Col xs={6}>
-                <small className="d-block opacity-80">Price per Night</small>
-                <p className="mb-0 fw-semibold fs-6">₹{room.price_per_day}</p>
-              </Col>
-            </Row>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', alignItems: 'center', gap: '24px' }}>
+              <div>
+                <h5 className="card-title mb-2 fw-bold" style={{ fontSize: '20px' }}>{hotel.name}</h5>
+                <p className="mb-2" style={{ opacity: '0.9', fontSize: '14px' }}>
+                  <span style={{ display: 'block', marginBottom: '8px' }}><strong>Room Type:</strong> {room.room_type}</span>
+                  <span style={{ display: 'block' }}><strong>Capacity:</strong> {room.min_people}-{room.max_people} guests</span>
+                </p>
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.15)', padding: '20px', borderRadius: '12px', textAlign: 'center' }}>
+                <p style={{ margin: '0 0 8px 0', opacity: '0.9', fontSize: '12px', fontWeight: '600' }}>PRICE PER NIGHT</p>
+                <p style={{ margin: '0', fontSize: '28px', fontWeight: '800' }}>₹{room.price_per_day}</p>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Error Messages */}
         {error && (
-          <Alert variant="danger" className="mb-4 d-flex gap-2 border-0" style={{ background: '#fee', color: '#c33' }}>
-            <AlertCircle size={20} className="flex-shrink-0 mt-1" />
-            <div>{error}</div>
+          <Alert variant="danger" className="mx-4 mb-4 d-flex gap-3 border-0 p-3" style={{ background: '#fee5e5', color: '#c33', borderRadius: '12px', borderLeft: '4px solid #ef4444' }}>
+            <AlertCircle size={20} className="flex-shrink-0 mt-1" style={{ color: '#ef4444' }} />
+            <div style={{ flex: 1 }}>{error}</div>
           </Alert>
         )}
 
-        <Form onSubmit={handleSubmitBooking}>
+        <Form onSubmit={handleSubmitBooking} style={{ padding: '0 16px' }}>
           {/* Booking Dates & Guests Section */}
-          <div className="mb-4">
-            <h6 className="fw-bold mb-3 d-flex align-items-center gap-2">
-              <Calendar size={18} className="text-primary" />
+          <div className="mb-4 mt-4 p-4 rounded-3" style={{ background: 'white', borderRadius: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+            <h6 className="fw-bold mb-4 d-flex align-items-center gap-2" style={{ fontSize: '16px', color: '#1e293b' }}>
+              <div style={{ background: '#667eea', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                <Calendar size={20} />
+              </div>
               Stay Details
             </h6>
             
-            <Row className="g-3">
+            <Row className="g-4">
               {/* Check-in Date */}
               <Col md={6}>
                 <Form.Group>
-                  <Form.Label className="fw-semibold text-secondary small">
-                    <Calendar size={16} className="d-inline me-1 text-primary" />
+                  <Form.Label className="fw-semibold text-secondary small" style={{ fontSize: '13px', letterSpacing: '0.5px', textTransform: 'uppercase', color: '#64748b' }}>
                     Check-in Date
                   </Form.Label>
                   <Form.Control
@@ -705,6 +813,7 @@ const BookingModal = ({
                     disabled={submitting}
                     min={today}
                     className={`form-control-lg border-2 ${dateError ? 'is-invalid' : ''}`}
+                    style={{ borderRadius: '10px', borderColor: '#e2e8f0', padding: '12px 16px', fontSize: '15px' }}
                     required
                   />
                 </Form.Group>
@@ -713,8 +822,7 @@ const BookingModal = ({
               {/* Check-out Date */}
               <Col md={6}>
                 <Form.Group>
-                  <Form.Label className="fw-semibold text-secondary small">
-                    <Calendar size={16} className="d-inline me-1 text-primary" />
+                  <Form.Label className="fw-semibold text-secondary small" style={{ fontSize: '13px', letterSpacing: '0.5px', textTransform: 'uppercase', color: '#64748b' }}>
                     Check-out Date
                   </Form.Label>
                   <Form.Control
@@ -725,13 +833,14 @@ const BookingModal = ({
                     disabled={submitting}
                     min={today}
                     className={`form-control-lg border-2 ${dateError ? 'is-invalid' : ''}`}
+                    style={{ borderRadius: '10px', borderColor: '#e2e8f0', padding: '12px 16px', fontSize: '15px' }}
                     required
                   />
                   {dateError && (
                     <Form.Control.Feedback type="invalid" className="d-block">
-                      <div className="d-flex gap-2 align-items-start mt-2">
+                      <div className="d-flex gap-2 align-items-start mt-2" style={{ color: '#ef4444' }}>
                         <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
-                        <span>{dateError}</span>
+                        <span style={{ fontSize: '13px' }}>{dateError}</span>
                       </div>
                     </Form.Control.Feedback>
                   )}
@@ -741,8 +850,7 @@ const BookingModal = ({
               {/* Number of People */}
               <Col md={6}>
                 <Form.Group>
-                  <Form.Label className="fw-semibold text-secondary small">
-                    <Users size={16} className="d-inline me-1 text-primary" />
+                  <Form.Label className="fw-semibold text-secondary small" style={{ fontSize: '13px', letterSpacing: '0.5px', textTransform: 'uppercase', color: '#64748b' }}>
                     Number of Guests
                   </Form.Label>
                   <Form.Select
@@ -751,6 +859,7 @@ const BookingModal = ({
                     onChange={handleInputChange}
                     disabled={submitting}
                     className="form-select-lg border-2"
+                    style={{ borderRadius: '10px', borderColor: '#e2e8f0', padding: '12px 16px', fontSize: '15px' }}
                     required
                   >
                     {Array.from(
@@ -768,12 +877,11 @@ const BookingModal = ({
               {/* Duration (Read-only) */}
               <Col md={6}>
                 <Form.Group>
-                  <Form.Label className="fw-semibold text-secondary small">
-                    <Clock size={16} className="d-inline me-1 text-primary" />
+                  <Form.Label className="fw-semibold text-secondary small" style={{ fontSize: '13px', letterSpacing: '0.5px', textTransform: 'uppercase', color: '#64748b' }}>
                     Duration
                   </Form.Label>
-                  <div className="p-3 bg-light rounded border-2" style={{ borderColor: '#e9ecef' }}>
-                    <p className="mb-0 fw-semibold text-dark fs-6">
+                  <div className="p-3 rounded-2" style={{ background: '#f0f4ff', border: '2px solid #e0e7ff', borderRadius: '10px', padding: '12px 16px !important' }}>
+                    <p className="mb-0 fw-semibold text-dark" style={{ fontSize: '15px', color: '#667eea' }}>
                       {calculatedDurationDays} {calculatedDurationDays === 1 ? 'night' : 'nights'}
                     </p>
                   </div>
@@ -782,56 +890,92 @@ const BookingModal = ({
             </Row>
           </div>
 
-          <hr className="my-4" />
+          <hr className="my-4" style={{ opacity: '0.2' }} />
 
           {/* Guest Information Section (dynamic based on no_of_people) */}
-          <div className="mb-4">
-            <h6 className="fw-bold mb-3 d-flex align-items-center gap-2">
-              <User size={18} className="text-primary" />
+          <div className="mb-4 p-4" style={{ background: 'white', borderRadius: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+            <h6 className="fw-bold mb-4 d-flex align-items-center gap-2" style={{ fontSize: '16px', color: '#1e293b' }}>
+              <div style={{ background: '#667eea', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                <User size={20} />
+              </div>
               Guest Information
             </h6>
 
             {guests.map((g, idx) => (
-              <div key={idx} className="mb-3 p-3 rounded border">
-                <div className="d-flex justify-content-between align-items-center mb-2">
-                  <strong>Guest {idx + 1} {g.is_primary && <span className="badge bg-primary ms-2">Primary</span>}</strong>
+              <div key={idx} className="mb-3 p-4" style={{ background: '#f8fafc', border: '2px solid #e2e8f0', borderRadius: '14px', transition: 'all 0.3s ease' }}>
+                {/* Per-form existing guest selector - disables options already chosen in other forms */}
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-semibold text-secondary small" style={{ fontSize: '13px', letterSpacing: '0.5px', textTransform: 'uppercase', color: '#64748b' }}>
+                    Quick Fill: Select Existing Guest
+                  </Form.Label>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <Form.Select
+                      value={g.guest_id || ''}
+                      onChange={(e) => handleSelectExistingGuest(idx, e)}
+                      disabled={loadingExistingGuests || submitting}
+                      aria-label={`Select existing guest for Guest ${idx + 1}`}
+                      style={{ borderRadius: '10px', borderColor: '#e2e8f0', padding: '12px 14px', fontSize: '14px' }}
+                    >
+                      <option value="">— Enter details manually —</option>
+                      {existingGuests.map((eg) => {
+                        const selectedIds = getSelectedGuestIds();
+                        const isSelectedElsewhere = selectedIds.includes(String(eg.id)) && String(g.guest_id) !== String(eg.id);
+                        return (
+                          <option key={eg.id} value={eg.id} disabled={isSelectedElsewhere}>
+                            {eg.first_name} {eg.last_name} — {eg.phone || eg.email}{isSelectedElsewhere ? ' (Selected)' : ''}
+                          </option>
+                        );
+                      })}
+                    </Form.Select>
+                    <Button variant="outline-secondary" size="sm" onClick={() => clearExistingGuestSelection(idx)} disabled={submitting} style={{ borderRadius: '8px', padding: '10px 14px', fontSize: '13px' }}>
+                      Clear
+                    </Button>
+                  </div>
+                </Form.Group>
+
+                <div className="d-flex justify-content-between align-items-center mb-3 pb-3" style={{ borderBottom: '2px solid #e2e8f0' }}>
+                  <strong style={{ fontSize: '15px', color: '#1e293b' }}>Guest {idx + 1} {g.is_primary && <span className="badge ms-2" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontSize: '11px', fontWeight: '600' }}>PRIMARY</span>}</strong>
                 </div>
-                <Row className="g-2">
+                
+                <Row className="g-3">
                   <Col md={6}>
                     <Form.Group>
-                      <Form.Label className="fw-semibold text-secondary small">First Name</Form.Label>
+                      <Form.Label className="fw-semibold text-secondary small" style={{ fontSize: '13px', letterSpacing: '0.5px', color: '#64748b' }}>First Name</Form.Label>
                       <Form.Control
                         type="text"
                         value={g.first_name}
                         onChange={(e) => handleGuestChange(idx, 'first_name', e.target.value)}
                         disabled={submitting}
                         className="form-control-lg border-2"
+                        style={{ borderRadius: '10px', borderColor: '#e2e8f0', padding: '12px 14px', fontSize: '14px' }}
                         required
                       />
                     </Form.Group>
                   </Col>
                   <Col md={6}>
                     <Form.Group>
-                      <Form.Label className="fw-semibold text-secondary small">Last Name</Form.Label>
+                      <Form.Label className="fw-semibold text-secondary small" style={{ fontSize: '13px', letterSpacing: '0.5px', color: '#64748b' }}>Last Name</Form.Label>
                       <Form.Control
                         type="text"
                         value={g.last_name}
                         onChange={(e) => handleGuestChange(idx, 'last_name', e.target.value)}
                         disabled={submitting}
                         className="form-control-lg border-2"
+                        style={{ borderRadius: '10px', borderColor: '#e2e8f0', padding: '12px 14px', fontSize: '14px' }}
                         required
                       />
                     </Form.Group>
                   </Col>
 
-                  <Col md={4} className="mt-2">
+                  <Col md={4}>
                     <Form.Group>
-                      <Form.Label className="fw-semibold text-secondary small">Gender</Form.Label>
+                      <Form.Label className="fw-semibold text-secondary small" style={{ fontSize: '13px', letterSpacing: '0.5px', color: '#64748b' }}>Gender</Form.Label>
                       <Form.Select
                         value={g.gender}
                         onChange={(e) => handleGuestChange(idx, 'gender', e.target.value)}
                         disabled={submitting}
                         className="form-select-lg border-2"
+                        style={{ borderRadius: '10px', borderColor: '#e2e8f0', padding: '12px 14px', fontSize: '14px' }}
                         required
                       >
                         <option value="">Select</option>
@@ -842,9 +986,9 @@ const BookingModal = ({
                     </Form.Group>
                   </Col>
 
-                  <Col md={4} className="mt-2">
+                  <Col md={4}>
                     <Form.Group>
-                      <Form.Label className="fw-semibold text-secondary small">Age</Form.Label>
+                      <Form.Label className="fw-semibold text-secondary small" style={{ fontSize: '13px', letterSpacing: '0.5px', color: '#64748b' }}>Age</Form.Label>
                       <Form.Control
                         type="number"
                         min={0}
@@ -852,34 +996,37 @@ const BookingModal = ({
                         onChange={(e) => handleGuestChange(idx, 'age', e.target.value)}
                         disabled={submitting}
                         className="form-control-lg border-2"
+                        style={{ borderRadius: '10px', borderColor: '#e2e8f0', padding: '12px 14px', fontSize: '14px' }}
                         required
                       />
                     </Form.Group>
                   </Col>
 
-                  <Col md={4} className="mt-2">
+                  <Col md={4}>
                     <Form.Group>
-                      <Form.Label className="fw-semibold text-secondary small">Phone</Form.Label>
+                      <Form.Label className="fw-semibold text-secondary small" style={{ fontSize: '13px', letterSpacing: '0.5px', color: '#64748b' }}>Phone</Form.Label>
                       <Form.Control
                         type="tel"
                         value={g.phone}
                         onChange={(e) => handleGuestChange(idx, 'phone', e.target.value)}
                         disabled={submitting}
                         className="form-control-lg border-2"
+                        style={{ borderRadius: '10px', borderColor: '#e2e8f0', padding: '12px 14px', fontSize: '14px' }}
                         required
                       />
                     </Form.Group>
                   </Col>
 
-                  <Col md={12} className="mt-2">
+                  <Col md={12}>
                     <Form.Group>
-                      <Form.Label className="fw-semibold text-secondary small">Email</Form.Label>
+                      <Form.Label className="fw-semibold text-secondary small" style={{ fontSize: '13px', letterSpacing: '0.5px', color: '#64748b' }}>Email</Form.Label>
                       <Form.Control
                         type="email"
                         value={g.email}
                         onChange={(e) => handleGuestChange(idx, 'email', e.target.value)}
                         disabled={submitting}
                         className="form-control-lg border-2"
+                        style={{ borderRadius: '10px', borderColor: '#e2e8f0', padding: '12px 14px', fontSize: '14px' }}
                         required
                       />
                     </Form.Group>
@@ -889,50 +1036,46 @@ const BookingModal = ({
             ))}
           </div>
 
-          <hr className="my-4" />
+          <hr className="my-4" style={{ opacity: '0.2' }} />
 
           {/* Payment Section */}
-          <div className="mb-4">
-            <h6 className="fw-bold mb-3 d-flex align-items-center gap-2">
-              <CreditCard size={18} className="text-primary" />
+          <div className="mb-4 p-4" style={{ background: 'white', borderRadius: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+            <h6 className="fw-bold mb-4 d-flex align-items-center gap-2" style={{ fontSize: '16px', color: '#1e293b' }}>
+              <div style={{ background: '#667eea', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                <CreditCard size={20} />
+              </div>
               Payment Information
             </h6>
 
             {/* Price Breakdown Card */}
-            <div className="card border-0 bg-light mb-4">
-              <div className="card-body">
-                <Row className="mb-3 pb-3 border-bottom">
+            <div className="card border-0 mb-4" style={{ background: 'linear-gradient(135deg, #f0f4ff 0%, #fafbfc 100%)', borderRadius: '14px' }}>
+              <div className="card-body p-4">
+                <Row className="mb-4 pb-3" style={{ borderBottom: '2px solid #e0e7ff' }}>
                   <Col xs={6}>
-                    <small className="text-muted d-block">Rate per Night</small>
-                    <p className="mb-0 fw-semibold">₹{room.price_per_day}</p>
+                    <small style={{ fontSize: '12px', letterSpacing: '0.5px', textTransform: 'uppercase', color: '#64748b', fontWeight: '600' }}>Rate per Night</small>
+                    <p className="mb-0 fw-bold" style={{ fontSize: '16px', color: '#1e293b', marginTop: '6px' }}>₹{room.price_per_day}</p>
                   </Col>
                   <Col xs={6} className="text-end">
-                    <small className="text-muted d-block">× {calculatedDurationDays} {calculatedDurationDays === 1 ? 'night' : 'nights'}</small>
-                    <p className="mb-0 fw-semibold">₹{(room.price_per_day * calculatedDurationDays).toFixed(2)}</p>
+                    <small style={{ fontSize: '12px', letterSpacing: '0.5px', textTransform: 'uppercase', color: '#64748b', fontWeight: '600' }}>× {calculatedDurationDays} {calculatedDurationDays === 1 ? 'night' : 'nights'}</small>
+                    <p className="mb-0 fw-bold" style={{ fontSize: '16px', color: '#667eea', marginTop: '6px' }}>₹{(room.price_per_day * calculatedDurationDays).toFixed(2)}</p>
                   </Col>
                 </Row>
-                <Row>
+                <Row className="mb-0">
                   <Col xs={6}>
-                    <small className="text-muted d-block mb-1">Total Amount</small>
+                    <small style={{ fontSize: '12px', letterSpacing: '0.5px', textTransform: 'uppercase', color: '#64748b', fontWeight: '600' }}>Total Amount</small>
                   </Col>
                   <Col xs={6} className="text-end">
-                    <h5 className="mb-0 text-success fw-bold">
+                    <h4 className="mb-0 fw-bold" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                       ₹{totalAmount.toFixed(2)}
-                    </h5>
+                    </h4>
                   </Col>
                 </Row>
-                <div style={{ background: '#fff3cd', border: '1px solid #ffc107', borderRadius: '6px', padding: '12px', marginTop: '16px' }}>
-                  <small style={{ color: '#856404', fontWeight: '600' }}>
-                    ⚠️ Advance Payment Required: ₹{minimumAdvancePayment.toFixed(2)} (10% of total)
-                  </small>
-                </div>
               </div>
             </div>
 
             {/* Payment Mode */}
-            <Form.Group className="mb-3">
-              <Form.Label className="fw-semibold text-secondary small">
-                <CreditCard size={16} className="d-inline me-1 text-primary" />
+            <Form.Group className="mb-4">
+              <Form.Label className="fw-semibold text-secondary small" style={{ fontSize: '13px', letterSpacing: '0.5px', textTransform: 'uppercase', color: '#64748b' }}>
                 Payment Method
               </Form.Label>
               <Form.Select
@@ -941,6 +1084,7 @@ const BookingModal = ({
                 onChange={handleInputChange}
                 disabled={submitting}
                 className="form-select-lg border-2"
+                style={{ borderRadius: '10px', borderColor: '#e2e8f0', padding: '12px 14px', fontSize: '14px' }}
               >
                 <option value="Card">💳 Card</option>
                 <option value="UPI">📱 UPI</option>
@@ -948,14 +1092,13 @@ const BookingModal = ({
             </Form.Group>
 
             {/* Amount to Pay */}
-            <Form.Group className="mb-3">
-              <Form.Label className="fw-semibold text-secondary small">
-                <IndianRupee size={16} className="d-inline me-1 text-primary" />
-                Amount to Pay Now (Minimum 10% Advance)
+            <Form.Group className="mb-4">
+              <Form.Label className="fw-semibold text-secondary small" style={{ fontSize: '13px', letterSpacing: '0.5px', textTransform: 'uppercase', color: '#64748b' }}>
+                Amount to Pay Now
               </Form.Label>
               <InputGroup className="mb-2">
-                <InputGroup.Text className="bg-light border-2" style={{ borderColor: '#dee2e6' }}>
-                  <IndianRupee size={18} className="text-primary" />
+                <InputGroup.Text className="border-2" style={{ borderColor: '#e2e8f0', background: '#f8fafc', borderRadius: '10px 0 0 10px' }}>
+                  <IndianRupee size={18} style={{ color: '#667eea' }} />
                 </InputGroup.Text>
                 <Form.Control
                   type="number"
@@ -968,26 +1111,28 @@ const BookingModal = ({
                   step={0.01}
                   disabled={submitting}
                   className="form-control-lg border-2"
+                  style={{ borderColor: '#e2e8f0', padding: '12px 14px', fontSize: '14px', borderRadius: '0 10px 10px 0' }}
                   required
                 />
               </InputGroup>
-              <small className="text-muted d-block mt-2">
+              <small className="d-block" style={{ color: '#64748b', fontSize: '13px', marginTop: '8px' }}>
                 <strong>Minimum Advance (10%):</strong> ₹{minimumAdvancePayment.toFixed(2)}
               </small>
-              <small className="text-muted d-block">
+              <small className="d-block" style={{ color: '#667eea', fontSize: '13px', marginTop: '4px', fontWeight: '600' }}>
                 <strong>Remaining to Pay:</strong> ₹{Number(totalAmount - bookingForm.paid).toFixed(2)}
               </small>
             </Form.Group>
           </div>
 
           {/* Submit Button */}
-          <div className="d-grid gap-2 mt-4">
+          <div className="d-grid gap-2 mt-4 mb-4">
             <Button
               variant="primary"
               size="lg"
               type="submit"
               disabled={submitting}
               className="fw-semibold py-3"
+              style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', border: 'none', borderRadius: '12px', fontSize: '16px', fontWeight: '700', boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)', transition: 'all 0.3s ease' }}
             >
               {submitting ? (
                 <>
